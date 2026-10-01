@@ -1,12 +1,16 @@
-"""
-Base model configuration and common model utilities.
-"""
 import uuid
-from sqlmodel import SQLModel
+
+from sqlmodel import SQLModel, Field
 
 
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
+def generate_id() -> str:
+    return str(uuid.uuid7())
 
 
-__all__ = ["SQLModel", "generate_uuid"]
+class ApiResponse(SQLModel):
+    success: bool = True
+    data: dict | list = Field(default={})
+
+class ApiErrorResponse(SQLModel):
+    success: bool = False
+    error_code: str

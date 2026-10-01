@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.api.v1 import api
-from app.core.database import create_db_and_tables
 
 
 app = FastAPI(
@@ -22,6 +21,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Root & Health Endpoints
 @app.get("/", tags=["Health"])

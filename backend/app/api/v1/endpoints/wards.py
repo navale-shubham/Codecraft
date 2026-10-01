@@ -1,11 +1,8 @@
-"""
-Ward administrative API endpoints.
-"""
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from app.schemas.common import ApiResponse
 from app.core.database import get_db
-from app.crud.crud_ward import ward
+from app.crud.ward import ward
 
 app = APIRouter(prefix="/wards", tags=["Wards"])
 

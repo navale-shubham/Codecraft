@@ -39,7 +39,7 @@ He should be able to:
 
 ---
 
-### 1.3 Department User
+### 1.3 Department Staff
 
 Capabilities:
 
@@ -248,7 +248,6 @@ RESOLVED     REOPEN (Assign Issue to Field Staff)
 organizations
 -------------
 id UUID PK
-user_id UUID FK
 name VARCHAR(150)
 created_at TIMESTAMP
 ```
@@ -258,26 +257,16 @@ created_at TIMESTAMP
 ## 3.2 users
 
 ```sql
-users
+citizens
 -----
 id UUID PK
-organization_id UUID FK NULL
-department_id UUID FK NULL
+organization_id UUID FK
+department_id UUID FK
 name VARCHAR(100)
 email VARCHAR(255) UNIQUE
 password_hash TEXT
-role_id UUID FK
+role ENUM('CITIZEN','ORG_ADMIN','DEPARTMENT_STAFF','FIELD_STAFF')
 created_at TIMESTAMP
-
-```
-
-Possible roles:
-
-```text
-CITIZEN
-ORG_ADMIN
-DEPARTMENT_USER
-FIELD_STAFF
 ```
 
 ---
@@ -309,7 +298,20 @@ created_at TIMESTAMP
 
 ---
 
-## 3.5 issue_categories
+## 3.5 field teams
+
+```sql
+field_teams
+-----------
+id UUID PK
+department_id UUID FK
+name VARCHAR(100)
+created_at TIMESTAMP
+```
+
+---
+
+## 3.6 issue_categories
 
 ```sql
 issue_categories
@@ -323,7 +325,7 @@ created_at TIMESTAMP
 
 ---
 
-## 3.6 issues
+## 3.7 issues
 
 ```sql
 issues
@@ -356,7 +358,7 @@ created_at TIMESTAMP
 
 ---
 
-## 3.7 issue_media
+## 3.8 issue_media
 
 ```sql
 issue_media
@@ -399,6 +401,22 @@ Error:
 
 ## 4.1 Authentication APIs
 
+### Register
+
+```http
+POST /api/v1/auth/register
+```
+
+Request:
+
+```json
+{
+  "name": "",
+  "email": "",
+  "password": "",
+}
+```
+
 ### Login
 
 ```http
@@ -420,26 +438,6 @@ Response:
 {
   "success": true,
   "data": {
-    "accessToken": "jwt_token",
-    "refreshToken": "refresh_token"
-  }
-}
-```
-
----
-
-### Refresh Token
-
-```http
-POST /api/v1/auth/refresh
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
     "accessToken": "jwt_token"
   }
 }
@@ -448,28 +446,6 @@ Response:
 ---
 
 ## 4.2 Citizen APIs
-
-### Register Citizen
-
-```http
-POST /api/v1/citizens
-```
-
-Request:
-
-```json
-{
-  "Name": "Rahul Sharma",
-  "email": "rahul@example.com",
-  "location": {
-    "latitude": 19.0760,
-    "longitude": 72.8777
-  },
-  "password": "********"
-}
-```
-
----
 
 ### Get Citizen Profile
 
@@ -484,9 +460,7 @@ Response:
   "success": true,
   "data": {
     "name": "Full Name",
-    "email": "example@xyz.com",
-    "organizationName": "",
-    "wardName": ""
+    "email": "example@xyz.com"
   }
 }
 ```
@@ -611,7 +585,7 @@ Response:
 
 ---
 
-## 4.3. Department User APIs
+## 4.3. Department Staff APIs
 
 ### Get Department Dashboard
 

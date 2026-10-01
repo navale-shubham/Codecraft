@@ -23,6 +23,22 @@ from app.core.store import store
 
 app = APIRouter(prefix="/issues", tags=["Issues & Workflow"])
 
+@app.post("/register", response_model=ApiResponse)
+def register_citizen(payload: CitizenRegisterRequest, db: Session = Depends(get_db)):
+    new_user = User(
+        first_name=payload.firstName,
+        last_name=payload.lastName,
+        email=payload.email,
+        phone=payload.phone or "+91 99999 00000",
+        role="CITIZEN",
+        ward_id=payload.wardId or "w_12",
+        status="ACTIVE"
+    )
+    crud_user.create(db=db, obj_in=new_user)
+    return ApiResponse(
+        data={"userId": new_user.id, "message": "Registration successful"}
+    )
+
 @app.get("", response_model=ApiResponse)
 def get_issues(
     mine: bool = Query(False),

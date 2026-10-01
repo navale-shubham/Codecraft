@@ -1,7 +1,17 @@
-from .crud_ward import ward
-from .crud_category import category
-from .crud_department import department
-from .crud_issue import issue
-from .crud_notification import notification
-from .crud_user import user
+from .department import CRUDDepartment
+from .field_team import CRUDFieldTeam
+from .issue_category import CRUDIssueCategory
+from .issue_media import CRUDIssueMedia
+from .organization import CRUDOrganization
+from .user import CRUDUser
+from .ward import CRUDWard
 
+__all__ = [
+    "CRUDDepartment",
+    "CRUDFieldTeam",
+    "CRUDIssueCategory",
+    "CRUDIssueMedia",
+    "CRUDOrganization",
+    "CRUDUser",
+    "CRUDWard",
+]

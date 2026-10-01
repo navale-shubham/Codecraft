@@ -1,68 +1,82 @@
-"""
-Authentication API endpoints.
-"""
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, status, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session
-from app.schemas.common import ApiResponse
-from app.schemas.auth import (
-    CitizenRegisterRequest,
-    LoginRequest,
-    LoginData,
-    UserResponse
+
+from app.models import ApiResponse, ApiErrorResponse, UserCreate, UserLogin, UserRole
+from app.core import (
+    HTTPException, create_access_token, get_session, decode_token,
+    verify_password
 )
-from app.core.database import get_db
-from app.crud import user as crud_user
-from app.models.user import User
-from app.core.security import create_access_token, create_refresh_token
+from app.services import read_user_by_id, read_user_by_email, create_citizen
 
-app = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@app.post("/register", response_model=ApiResponse)
-def register_citizen(payload: CitizenRegisterRequest, db: Session = Depends(get_db)):
-    new_user = User(
-        first_name=payload.firstName,
-        last_name=payload.lastName,
-        email=payload.email,
-        phone=payload.phone or "+91 99999 00000",
-        role="CITIZEN",
-        ward_id=payload.wardId or "w_12",
-        status="ACTIVE"
-    )
-    crud_user.create(db=db, obj_in=new_user)
-    return ApiResponse(
-        data={"userId": new_user.id, "message": "Registration successful"}
-    )
+app = APIRouter(prefix="/auth")
 
-@app.post("/login", response_model=ApiResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = crud_user.get_by_email(db, email=payload.email)
-    if not user:
-        users = crud_user.get_multi(db=db, limit=1)
-        if not users:
-            raise HTTPException(status_code=404, detail="User not found")
-        user = users[0]
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
+
+
+def get_current_user(
+    session: Annotated[Session, Depends(get_session)],
+    token: Annotated[str, Depends(oauth2_scheme)]
+):
+    sub = decode_token(token)
+    if not sub:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_TOKEN")
     
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    user = read_user_by_id(session, user_id=sub)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, error_code="USER_NOT_FOUND")
+    
+    return user
 
-    return ApiResponse(
-        data=LoginData(
-            accessToken=access_token,
-            refreshToken=refresh_token,
-            user=UserResponse(
-                id=user.id,
-                name=f"{user.first_name} {user.last_name}",
-                email=user.email,
-                phone=user.phone,
-                role=user.role,
-                organizationId=user.organization_id,
-                departmentId=user.department_id,
-                wardId=user.ward_id,
-                status=user.status or "ACTIVE"
-            )
-        )
-    )
 
-@app.post("/logout", response_model=ApiResponse)
-def logout():
-    return ApiResponse(data={"message": "Logged out successfully"})
+@app.post(
+    '/register',
+    response_model=ApiResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ApiErrorResponse
+        },
+        status.HTTP_409_CONFLICT: {
+            "model": ApiErrorResponse
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "model": ApiErrorResponse
+        },
+    }
+)
+def register(
+    payload: UserCreate,
+    session: Annotated[Session, Depends(get_session)]
+):
+    if payload.role != UserRole.CITIZEN:
+        raise HTTPException(status_code=400, error_code="INVALID_ROLE")
+    
+    if read_user_by_email(session, email=payload.email):
+        raise HTTPException(status_code=409, error_code="USER_ALREADY_EXISTS")
+
+    create_citizen(session, payload)
+
+
+@app.post(
+    "/login",
+    response_model=ApiResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ApiErrorResponse
+        }
+    }
+)
+def login(payload: Annotated[UserLogin, OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):
+    user = read_user_by_email(session, email=payload.email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_CREDENTIALS")
+
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_CREDENTIALS")
+    
+    return ApiResponse(data={ "accessToken": create_access_token(user.id) })
