@@ -1,9 +1,23 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .user import User
+    from .organization import Organization
+    from .ward import Ward
+    from .department import Department
+
+
 from enum import Enum
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlmodel import SQLModel, Field, Relationship
 
-from .base import generate_id
+from .base import generate_id, Location
+from .user import UserViewResponse
+from .organization import OrganizationViewResponse
+from .ward import WardViewResponse
+from .department import DepartmentViewResponse
 
 
 class IssueStatus(str, Enum):
@@ -23,6 +37,8 @@ class IssueCategory(SQLModel, table=True):
     organization_id: str = Field(foreign_key="organizations.id", max_length=36)
     department_id: str = Field(foreign_key="departments.id", max_length=36)
     name: str = Field(max_length=150)
+
+    issues: list[Issue] = Relationship(back_populates="category")
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -47,7 +63,7 @@ class Issue(SQLModel, table=True):
 
     status: IssueStatus = Field(default=IssueStatus.REPORTED, max_length=30)
 
-    assigned_to: str | None = Field(default=None, foreign_key="users.id", max_length=36)
+    assigned_to_id: str | None = Field(default=None, foreign_key="users.id", max_length=36)
 
     reported_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     due_at: datetime | None = None
@@ -56,6 +72,18 @@ class Issue(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    citizen: User = Relationship(
+        back_populates="created_issues",
+        sa_relationship_kwargs={ "foreign_keys": "[Issue.citizen_id]" }
+    )
+    assigned_to: Optional[User] = Relationship(
+        back_populates="assigned_issues",
+        sa_relationship_kwargs={ "foreign_keys": "[Issue.assigned_to_id]" }
+    )
+    organization: Organization = Relationship(back_populates="issues")
+    ward: Ward = Relationship(back_populates="issues")
+    department: Department = Relationship(back_populates="issues")
+    category: IssueCategory = Relationship(back_populates="issues")
     media: list[IssueMedia] = Relationship(back_populates="issue")
 
 
@@ -66,5 +94,61 @@ class IssueMedia(SQLModel, table=True):
     id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
     issue_id: str = Field(foreign_key="issues.id", max_length=36)
     file_url: str
+
+    issue: Issue = Relationship(back_populates="media")
     
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class IssueCreateRequest(SQLModel):
+    title: str
+    description: str
+    category_id: str
+    location: Location
+    created_at: datetime
+
+
+class IssueCreateResponse(SQLModel):
+    id: str | None
+
+
+class IssueCategoryViewResponse(SQLModel):
+    name: str
+
+
+class IssueMediaCreateRequest(SQLModel):
+    issue_id: str
+    file_url: str
+
+
+class IssueResponse(SQLModel):
+    id: str
+    issue_number: str
+    citizen: UserViewResponse
+    organization: OrganizationViewResponse
+    ward: WardViewResponse
+    department: DepartmentViewResponse
+    category: IssueCategoryViewResponse
+
+    title: str
+    description: str
+
+    latitude: float
+    longitude: float
+
+    status: IssueStatus
+
+    assigned_to: UserViewResponse | None
+
+    reported_at: datetime
+    due_at: datetime | None
+    resolved_at: datetime | None
+    closed_at: datetime | None
+
+    created_at: datetime
+
+    media: list[IssueMediaResponse]
+
+
+class IssueMediaResponse(SQLModel):
+    file_url: str

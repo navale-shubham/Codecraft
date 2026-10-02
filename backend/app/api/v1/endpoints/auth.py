@@ -4,7 +4,10 @@ from fastapi import APIRouter, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session
 
-from app.models import ApiResponse, ApiErrorResponse, UserCreate, UserLogin, UserRole
+from app.models import (
+    ApiResponse, ApiErrorResponse, UserCreate, UserLogin, UserRole,
+    Token
+)
 from app.core import (
     HTTPException, create_access_token, get_session, decode_token,
     verify_password
@@ -34,7 +37,7 @@ def get_current_user(
 
 @app.post(
     '/register',
-    response_model=ApiResponse,
+    response_model=ApiResponse[None],
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -60,10 +63,12 @@ def register(
 
     create_citizen(session, payload)
 
+    return ApiResponse[None]()
+
 
 @app.post(
     "/login",
-    response_model=ApiResponse,
+    response_model=ApiResponse[Token],
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
@@ -71,12 +76,21 @@ def register(
         }
     }
 )
-def login(payload: Annotated[UserLogin, OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):
-    user = read_user_by_email(session, email=payload.email)
+def login(
+    payload: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: Annotated[Session, Depends(get_session)]
+):
+    user = read_user_by_email(session, email=payload.username)
+    
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_CREDENTIALS")
 
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_CREDENTIALS")
     
-    return ApiResponse(data={ "accessToken": create_access_token(user.id) })
+    return ApiResponse[Token](
+        data = Token(
+            token_type="bearer",
+            access_token=create_access_token(user.id)
+        )
+    )

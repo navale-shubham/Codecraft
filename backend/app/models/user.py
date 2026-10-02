@@ -1,7 +1,13 @@
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .issue import Issue
+
+
 from enum import Enum
 from datetime import datetime, timezone
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from pydantic import EmailStr
 
 from .base import generate_id
@@ -25,6 +31,16 @@ class User(SQLModel, table=True):
     email: str = Field(max_length=255, unique=True)
     password_hash: str
     role: UserRole
+
+    created_issues: Optional[list[Issue]] = Relationship(
+        back_populates="citizen",
+        sa_relationship_kwargs={ "foreign_keys": "[Issue.citizen_id]" }
+    )
+    assigned_issues: Optional[list[Issue]] = Relationship(
+        back_populates="assigned_to",
+        sa_relationship_kwargs={ "foreign_keys": "[Issue.assigned_to_id]" }
+    )
+
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -40,3 +56,14 @@ class UserCreate(SQLModel):
 class UserLogin(SQLModel):
     email: EmailStr
     password: str
+
+
+class UserResponse(SQLModel):
+    id: str
+    name: str
+    email: str
+    role: UserRole
+
+
+class UserViewResponse(SQLModel):
+    name: str

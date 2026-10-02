@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 class Settings:
     PROJECT_NAME: str = "CivicPulse - Civic Issue Reporting & Resolution API"
@@ -14,5 +15,11 @@ class Settings:
     
     # CORS
     CORS_ORIGINS: list[str] = ["*"]
+
+    MEDIA_PATH: Path = Path(__file__).parent.parent.parent / "media"
+    MEDIA_PATH.mkdir(exist_ok=True)
+    MEDIA_URL = '/media'
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_FILE_TYPES: set[str] = {"image/jpeg", "image/png", "image/jpg"}
 
 settings = Settings()

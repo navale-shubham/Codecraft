@@ -1,7 +1,13 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .issue import Issue
+
+
 from datetime import datetime, timezone
 
 from geoalchemy2 import Geometry
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
 from .base import generate_id
 
@@ -15,4 +21,10 @@ class Ward(SQLModel, table=True):
     name: str = Field(max_length=100)
     geo_boundary: object = Field(sa_type=Geometry('POLYGON', 4326))
 
+    issues: list[Issue] = Relationship(back_populates="ward")
+
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class WardViewResponse(SQLModel):
+    name: str

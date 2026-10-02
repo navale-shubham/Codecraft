@@ -5,6 +5,7 @@ from .issue_media import CRUDIssueMedia
 from .organization import CRUDOrganization
 from .user import CRUDUser
 from .ward import CRUDWard
+from .issue import CRUDIssue
 
 __all__ = [
     "CRUDDepartment",
@@ -14,4 +15,5 @@ __all__ = [
     "CRUDOrganization",
     "CRUDUser",
     "CRUDWard",
+    "CRUDIssue",
 ]

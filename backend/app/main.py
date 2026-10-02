@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
@@ -12,6 +13,10 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/v1/openapi.json"
 )
+
+# Mount media directory
+app.mount("/media", StaticFiles(directory=settings.MEDIA_PATH), name="media")
+
 
 # CORS setup
 app.add_middleware(

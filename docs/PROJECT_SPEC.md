@@ -568,23 +568,6 @@ Response:
 
 ---
 
-### Get Issue Media
-
-```http
-GET /api/v1/citizens/issues/{issueId}/media
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": []
-}
-```
-
----
-
 ## 4.3. Department Staff APIs
 
 ### Get Department Dashboard
