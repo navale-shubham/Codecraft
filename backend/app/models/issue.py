@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .user import User
-    from .organization import Organization
-    from .ward import Ward
-    from .department import Department
+    from .user import User, UserViewResponse
+    from .organization import Organization, OrganizationViewResponse
+    from .ward import Ward, WardViewResponse
+    from .department import Department, DepartmentViewResponse
 
 
 from enum import Enum
@@ -14,10 +14,6 @@ from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
 
 from .base import generate_id, Location
-from .user import UserViewResponse
-from .organization import OrganizationViewResponse
-from .ward import WardViewResponse
-from .department import DepartmentViewResponse
 
 
 class IssueStatus(str, Enum):
@@ -26,7 +22,6 @@ class IssueStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     RESOLUTION_PENDING = "RESOLUTION_PENDING"
     RESOLVED = "RESOLVED"
-    CLOSED = "CLOSED"
 
 
 class IssueCategory(SQLModel, table=True):
@@ -39,8 +34,8 @@ class IssueCategory(SQLModel, table=True):
     name: str = Field(max_length=150)
 
     issues: list[Issue] = Relationship(back_populates="category")
-
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    organization: Organization = Relationship(back_populates="categories")
+    department: Department = Relationship(back_populates="categories")
 
 
 class Issue(SQLModel, table=True):
@@ -48,7 +43,7 @@ class Issue(SQLModel, table=True):
     __tablename__ = "issues"
 
     id: str | None = Field(default_factory=generate_id, primary_key=True, max_length=36)
-    issue_number: str = Field(max_length=30, unique=True)
+    issue_number: str = Field(max_length=50, unique=True)
     citizen_id: str = Field(foreign_key="users.id", max_length=36)
     organization_id: str = Field(foreign_key="organizations.id", max_length=36)
     ward_id: str = Field(foreign_key="wards.id", max_length=36)
@@ -105,7 +100,6 @@ class IssueCreateRequest(SQLModel):
     description: str
     category_id: str
     location: Location
-    created_at: datetime
 
 
 class IssueCreateResponse(SQLModel):
@@ -143,7 +137,6 @@ class IssueResponse(SQLModel):
     reported_at: datetime
     due_at: datetime | None
     resolved_at: datetime | None
-    closed_at: datetime | None
 
     created_at: datetime
 
@@ -152,3 +145,14 @@ class IssueResponse(SQLModel):
 
 class IssueMediaResponse(SQLModel):
     file_url: str
+
+
+class IssueAssignementRequest(SQLModel):
+    issue_id: str
+    assigned_to_id: str
+    due_at: datetime
+
+
+class IssueCategoryCreateRequest(SQLModel):
+    name: str
+    department_id: str

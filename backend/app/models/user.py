@@ -2,11 +2,13 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .issue import Issue
+    from .organization import Organization
 
 
 from enum import Enum
 from datetime import datetime, timezone
 
+from sqlalchemy import ForeignKey
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import EmailStr
 
@@ -25,8 +27,11 @@ class User(SQLModel, table=True):
     __tablename__ = "users"
 
     id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
-    organization_id: str | None = Field(default=None, foreign_key="organizations.id", max_length=36)
-    department_id: str | None = Field(default=None, foreign_key="departments.id", max_length=36)
+    department_id: str | None = Field(
+        default=None, 
+        sa_column_args=[ForeignKey("departments.id", name="fk_users_department_id")], 
+        max_length=36
+    )
     name: str = Field(max_length=100)
     email: str = Field(max_length=255, unique=True)
     password_hash: str
@@ -40,6 +45,10 @@ class User(SQLModel, table=True):
         back_populates="assigned_to",
         sa_relationship_kwargs={ "foreign_keys": "[Issue.assigned_to_id]" }
     )
+    organization: Organization = Relationship(
+        back_populates="admin",
+        sa_relationship_kwargs={ "foreign_keys": "[Organization.admin_id]" }
+    )
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -50,7 +59,6 @@ class UserCreate(SQLModel):
     name: str = Field(max_length=100)
     email: str = Field(max_length=255, unique=True)
     password: str
-    role: UserRole
 
 
 class UserLogin(SQLModel):

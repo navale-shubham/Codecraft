@@ -401,10 +401,10 @@ Error:
 
 ## 4.1 Authentication APIs
 
-### Register
+### Register Citizen
 
 ```http
-POST /api/v1/auth/register
+POST /api/v1/auth/citizen/register
 ```
 
 Request:
@@ -413,7 +413,24 @@ Request:
 {
   "name": "",
   "email": "",
-  "password": "",
+  "password": ""
+}
+```
+
+### Register Organization
+
+```http
+POST /api/v1/auth/organization/register
+```
+
+Request:
+
+```json
+{
+  "name": "",
+  "email": "",
+  "organization_name": "",
+  "password": ""
 }
 ```
 
@@ -427,7 +444,7 @@ Request:
 
 ```json
 {
-  "email": "rahul@example.com",
+  "username": "rahul@example.com",
   "password": "********"
 }
 ```
@@ -438,7 +455,8 @@ Response:
 {
   "success": true,
   "data": {
-    "accessToken": "jwt_token"
+    "token_type": "bearer",
+    "access_token": "jwt_token"
   }
 }
 ```
@@ -481,8 +499,7 @@ Request:
   "location": {
     "latitude": 19.0760,
     "longitude": 72.8777
-  },
-  "createdAt": "2026-09-28T12:12:00+05:30"
+  }
 }
 ```
 
@@ -502,7 +519,7 @@ Response:
 ### Upload Issue Media
 
 ```http
-POST /api/v1/citizens/issues/{issueId}/media
+POST /api/v1/citizens/issues/{issue_id}/media
 ```
 
 ---
@@ -527,7 +544,7 @@ Response:
 ### Get Issue
 
 ```http
-GET /api/v1/citizens/issues/{issueId}
+GET /api/v1/citizens/issues/{issue_id}
 ```
 
 Response:
@@ -537,11 +554,11 @@ Response:
   "success": true,
   "data": {
     "id": "issue_123",
-    "issueNumber": "CIV-2026-00123",
-    "citizenName": "",
-    "departmentName": "Roads Department",
-    "categoryName": "Potholes",
-    "wardName": "",
+    "issue_number": "CIV-2026-00123",
+    "citizen_name": "",
+    "department_name": "Roads Department",
+    "category_name": "Potholes",
+    "ward_name": "",
 
     "title": "Large pothole near school",
     "description": "...",
@@ -553,15 +570,15 @@ Response:
 
     "status": "IN_PROGRESS",
 
-    "assignedToName": "",
-    "assigneeName": "",
+    "assigned_to_name": "",
+    "assignee_name": "",
 
-    "reportedAt": "",
-    "dueAt": "",
-    "resolvedAt": "",
-    "closedAt": "",
+    "reported_at": "",
+    "due_at": "",
+    "resolved_at": "",
+    "closed_at": "",
 
-    "createdAt": ""
+    "created_at": ""
   }
 }
 ```
@@ -582,11 +599,11 @@ Response:
 {
   "success": true,
   "data": {
-    "totalIssues": 1250,
-    "openIssues": 240,
-    "inProgress": 120,
-    "resolved": 890,
-    "overdue": 40
+    "total_issues": 1250,
+    "open_issues": 240,
+    "in_progress_issues": 120,
+    "resolved_issues": 890,
+    "overdue_issues": 40
   }
 }
 ```
@@ -596,7 +613,7 @@ Response:
 ### Create Field Staff
 
 ```http
-POST /api/v1/departments/staff
+POST /api/v1/departments/fieldstaff
 ```
 
 Request:
@@ -614,7 +631,7 @@ Request:
 ### Get Field Staff
 
 ```http
-GET /api/v1/departments/staff
+GET /api/v1/departments/fieldstaff
 ```
 
 Response:
@@ -655,9 +672,9 @@ Request:
 
 ```json
 {
-  "issueId": "",
-  "assignTo": "usr_field_123",
-  "dueAt": "2026-09-27T18:00:00Z"
+  "issue_id": "",
+  "assigned_to": "usr_field_123",
+  "due_at": "2026-09-27T18:00:00Z"
 }
 ```
 
@@ -673,7 +690,7 @@ Request:
 
 ```json
 {
-  "issueId": ""
+  "issue_id": ""
 }
 ```
 
@@ -684,13 +701,13 @@ Request:
 ### Get Organization Dashboard
 
 ```http
-GET /api/v1/orgs
+GET /api/v1/organizations/dashboard
 ```
 
 ### Create Department
 
 ```http
-POST /api/v1/orgs/departments
+POST /api/v1/organizations/departments
 ```
 
 Request:
@@ -706,7 +723,7 @@ Request:
 ### List Departments
 
 ```http
-GET /api/v1/orgs/departments
+GET /api/v1/organizations/departments
 ```
 
 Response:
@@ -723,7 +740,7 @@ Response:
 ### Create Ward
 
 ```http
-POST /api/v1/orgs/wards
+POST /api/v1/organizations/wards
 ```
 
 Request:
@@ -731,14 +748,14 @@ Request:
 ```json
 {
   "name": "Ward 12",
-  "boundaryGeoJson": {}
+  "geo_boundary": {}
 }
 ```
 
 ### Get Wards
 
 ```http
-GET /api/v1/orgs/wards
+GET /api/v1/organizations/wards
 ```
 
 Response:
@@ -749,7 +766,7 @@ Response:
   "data": {
     "id": "ward_id",
     "name": "ward_name",
-    "boundaryGeoJson": {}
+    "geo_boundary": {}
   }
 }
 ```
@@ -759,7 +776,7 @@ Response:
 ### Create Category
 
 ```http
-POST /api/v1/orgs/categories
+POST /api/v1/organizations/categories
 ```
 
 Request:
@@ -767,22 +784,7 @@ Request:
 ```json
 {
   "name": "Potholes",
-  "departmentId": "department id"
-}
-```
-
-### Get Categories
-
-```http
-GET /api/v1/orgs/categories
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": []
+  "department_id": "department id"
 }
 ```
 
@@ -793,7 +795,7 @@ Response:
 ### Get Assigned Issues
 
 ```http
-GET /api/v1/staff/issues
+GET /api/v1/field-staff/issues
 ```
 
 ---
@@ -801,15 +803,7 @@ GET /api/v1/staff/issues
 ### Resolve Issue
 
 ```http
-POST /api/v1/staff/issues/{issueId}/resolve
-```
-
----
-
-### Upload Resolved Issue Media
-
-```http
-POST /api/v1/staff/issues/{issueId}/resolve/media
+POST /api/v1/field-staff/issues/{issue_id}/resolve
 ```
 
 ---
@@ -819,26 +813,5 @@ POST /api/v1/staff/issues/{issueId}/resolve/media
 ### Get Issue Media File
 
 ```http
-GET /api/v1/media/{mediaPath}
+GET /media/{mediaPath}
 ```
-
----
-
-## 4.7 Organization Creation API
-
-```http
-POST /api/v1/orgs
-```
-
-Request:
-
-```json
-{
-  "name": "",
-  "email": "",
-  "orgName": "",
-  "password": ""
-}
-```
-
----

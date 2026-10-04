@@ -15,3 +15,11 @@ class CRUDIssue(CRUDBase[Issue]):
         )
 
         return self.session.exec(statement).all()
+    
+    def get_by_department(self, department_id: str) -> Sequence[Issue]:
+        statement = (
+            select(Issue)
+            .where(Issue.department_id == department_id)
+        )
+
+        return self.session.exec(statement).all()

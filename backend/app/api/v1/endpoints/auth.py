@@ -6,18 +6,21 @@ from sqlmodel import Session
 
 from app.models import (
     ApiResponse, ApiErrorResponse, UserCreate, UserLogin, UserRole,
-    Token
+    Token, OrganizationCreateRequest
 )
 from app.core import (
     HTTPException, create_access_token, get_session, decode_token,
     verify_password
 )
-from app.services import read_user_by_id, read_user_by_email, create_citizen
+from app.services import (
+    read_user_by_id, read_user_by_email, create_citizen,
+    create_organization
+)
 
 
 app = APIRouter(prefix="/auth")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def get_current_user(
@@ -36,7 +39,7 @@ def get_current_user(
 
 
 @app.post(
-    '/register',
+    '/citizen/register',
     response_model=ApiResponse[None],
     status_code=status.HTTP_201_CREATED,
     responses={
@@ -51,13 +54,10 @@ def get_current_user(
         },
     }
 )
-def register(
+def register_citizen(
     payload: UserCreate,
     session: Annotated[Session, Depends(get_session)]
 ):
-    if payload.role != UserRole.CITIZEN:
-        raise HTTPException(status_code=400, error_code="INVALID_ROLE")
-    
     if read_user_by_email(session, email=payload.email):
         raise HTTPException(status_code=409, error_code="USER_ALREADY_EXISTS")
 
@@ -94,3 +94,31 @@ def login(
             access_token=create_access_token(user.id)
         )
     )
+
+
+@app.post(
+    "/organization/register",
+    response_model=ApiResponse[None],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ApiErrorResponse
+        },
+        status.HTTP_409_CONFLICT: {
+            "model": ApiErrorResponse
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "model": ApiErrorResponse
+        },
+    }
+)
+def register_organization(
+    payload: OrganizationCreateRequest,
+    session: Annotated[Session, Depends(get_session)]
+):
+    if read_user_by_email(session, email=payload.email):
+        raise HTTPException(status_code=409, error_code="ORGANIZATION_ALREADY_EXISTS_FOR_THIS_USER")
+    
+    create_organization(session, payload)
+
+    return ApiResponse[None]()

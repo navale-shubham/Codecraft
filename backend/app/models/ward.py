@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .issue import Issue
+    from .issue import Issue, IssueResponse
+    from .organization import Organization
 
 
 from datetime import datetime, timezone
@@ -21,6 +22,7 @@ class Ward(SQLModel, table=True):
     name: str = Field(max_length=100)
     geo_boundary: object = Field(sa_type=Geometry('POLYGON', 4326))
 
+    organization: Organization = Relationship(back_populates="wards")
     issues: list[Issue] = Relationship(back_populates="ward")
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -28,3 +30,15 @@ class Ward(SQLModel, table=True):
 
 class WardViewResponse(SQLModel):
     name: str
+
+
+class WardResponse(SQLModel):
+    id: str
+    name: str
+    geo_boundary: dict
+    issues: list[IssueResponse]
+
+
+class WardCreateRequest(SQLModel):
+    name: str
+    geo_boundary: dict

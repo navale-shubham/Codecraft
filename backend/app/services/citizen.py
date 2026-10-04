@@ -26,7 +26,7 @@ def create_citizen(session: Session, payload: UserCreate) -> User:
         User(
             name=payload.name,
             email=payload.email,
-            role=payload.role,
+            role=UserRole.CITIZEN,
             password_hash=get_password_hash(payload.password),
         )
     )
@@ -42,7 +42,7 @@ def create_issue(
     issue = Issue(
         issue_number=generate_issue_number(),
         citizen_id=citizen.id,
-        organization_id="10245144-a383-46a3-829a-85e3708ab8ba",
+        organization_id="",
         ward_id="10245144-a383-46a3-829a-85e3708ab8ba",
         department_id="10245144-a383-46a3-829a-85e3708ab8ba",
         category_id=payload.category_id,

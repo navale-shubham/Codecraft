@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import io
+import uuid
 
 
 class URL:
@@ -7,25 +8,46 @@ class URL:
 
 
 class AuthURL:
-    login = URL.BASE + "/auth/login"
-    register = URL.BASE + "/auth/register"
-    
+    base = URL.BASE + "/auth"
 
-class CitizenURL:
-    me = URL.BASE + "/citizens/me"
-    issues = URL.BASE + "/citizens/issues"
-    issues_with_id = lambda issue_id: URL.BASE + f"/citizens/issues/{issue_id}"
-    issues_media = lambda issue_id: URL.BASE + f"/citizens/issues/{issue_id}/media"
+    citizen_register = base + "/citizen/register"
+    organization_register = base + "/organization/register"
+    login = base + "/login"
 
 
-@dataclass
-class Headers:
-    authorization: str = ""
+class CitizensURL:
+    base = URL.BASE + "/citizens"
 
-    def get_headers(self) -> dict:
-        return {
-            "Authorization": self.authorization
-        }
+    me = base + "/me"
+    issues = base + "/issues"
+    issue_media = lambda issue_id: CitizensURL.base + f"/issues/{issue_id}/media"
+    issue = lambda issue_id: CitizensURL.base + f"/issues/{issue_id}"
+
+
+class OrganizationsURL:
+    base = URL.BASE + "/organizations"
+
+    dashboard = base + "/dashboard"
+    departments = base + "/departments"
+    wards = base + "/wards"
+    categories = base + "/categories"
+
+
+class DepartmentURL:
+    base = URL.BASE + "/departments"
+
+    dashboard = base + "/dashboard"
+    fieldstaff = base + "/fieldstaff"
+    issues = base + "/issues"
+    assign_issue = base + "/issues/assign"
+    resolve_issue = base + "/issues/resolve"
+
+
+class FieldStaffURL:
+    base = URL.BASE + "/field-staff"
+
+    issues = base + "/issues"
+    resolve_issue = lambda issue_id: FieldStaffURL.base + f"/issues/{issue_id}/resolve"
 
 
 @dataclass
@@ -34,7 +56,7 @@ class User:
     email: str
     password: str
 
-    headers: Headers | None = None
+    headers: dict[str, str] = field(default_factory=dict)
 
     def get_register_data(self) -> dict:
         return {
@@ -48,34 +70,17 @@ class User:
             "username": self.email,
             "password": self.password,
         }
-    
-    def set_headers(self, token_type: str, access_token: str):
-        self.headers = Headers(authorization=f"{token_type} {access_token}")
-    
-    def get_headers(self) -> dict:
-        if self.headers is None:
-            raise Exception("User is not logged in.")
-        return self.headers.get_headers()
 
-
-class Citizen(User):
-    role: str = "CITIZEN"
-
-    def get_register_data(self) -> dict:
-        return {
-            "name": self.name,
-            "email": self.email,
-            "password": self.password,
-            "role": self.role,
-        }
+    def set_header(self, key, value):
+        self.headers[key] = value
 
 
 @dataclass
-class LocationData:
+class Location:
     latitude: float
     longitude: float
 
-    def get_location_data(self) -> dict:
+    def get_data(self) -> dict:
         return {
             "latitude": self.latitude,
             "longitude": self.longitude,
@@ -83,25 +88,80 @@ class LocationData:
 
 
 @dataclass
-class IssueData:
+class Issue:
     title: str
     description: str
     category_id: str
-    location: LocationData
-    created_at: str
-    
-    def get_issue_data(self) -> dict:
+    location: Location
+
+    def get_data(self) -> dict:
         return {
             "title": self.title,
             "description": self.description,
             "category_id": self.category_id,
-            "location": self.location.get_location_data(),
-            "created_at": self.created_at,
+            "location": self.location.get_data(),
         }
     
     def get_media_data(self) -> dict:
         file = io.BytesIO(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00")
-        file.name = "test.jpg"
+        file.name = "test_image.jpg"
         return {
             "file": file
+        }
+
+
+@dataclass
+class Department:
+    name: str
+    id: uuid.UUID | None = None
+
+    def get_data(self) -> dict:
+        return {
+            "name": self.name,
+        }
+
+    def get_data_with_id(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
+
+
+@dataclass
+class Ward:
+    name: str
+    geo_boundary: dict
+    id: uuid.UUID | None = None
+
+    def get_data(self) -> dict:
+        return {
+            "name": self.name,
+            "geo_boundary": self.geo_boundary,
+        }
+
+    def get_data_with_id(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "geo_boundary": self.geo_boundary,
+        }
+
+
+@dataclass
+class Category:
+    name: str
+    department_id: uuid.UUID
+    id: uuid.UUID | None = None
+
+    def get_data(self) -> dict:
+        return {
+            "name": self.name,
+            "department_id": self.department_id,
+        }
+
+    def get_data_with_id(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "department_id": self.department_id,
         }
