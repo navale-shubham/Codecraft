@@ -59,5 +59,5 @@ def test_login(client):
     )
 
     assert response.status_code == 200
-    assert response.json().get('success') is True
-    assert 'access_token' in response.json().get('data')
+    assert 'access_token' in response.json()
+    assert 'token_type' in response.json()
