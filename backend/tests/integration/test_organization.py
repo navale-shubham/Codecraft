@@ -1,45 +1,11 @@
 from tests.constants import (
-    OrganizationsURL, User,
-    AuthURL,
+    OrganizationsURL,
     Department,
     Ward,
-    Category
+    Category,
+    User
 )
-
-
-def setup_organization(client):
-    admin = User(
-        name="Org Admin",
-        email="admin@org.com",
-        password="password123"
-    )
-    data = admin.get_register_data()
-    data.update({"organization_name": "Test Organization"})
-
-    # Register and login admin
-    response = client.post(
-        AuthURL.organization_register,
-        json=data
-    )
-
-    assert response.status_code == 201
-    assert response.json().get('success') is True
-
-    response = client.post(
-        AuthURL.login,
-        data=admin.get_login_data()
-    )
-
-    assert response.status_code == 200
-    assert response.json().get('success') is True
-
-    data = response.json().get('data')
-
-    token_type = data.get('token_type')
-    access_token = data.get('access_token')
-    
-    admin.set_header('Authorization', f'{token_type} {access_token}')
-    return admin
+from tests.utils import setup_organization, setup_department
 
 
 def test_organization_dashboard(client):
@@ -89,7 +55,6 @@ def test_organization_departments(client):
     assert 'id' in data
 
 
-########################## ERROR ##########################
 def test_organization_wards(client):
     admin = setup_organization(client)
     ward = Ward(
@@ -133,3 +98,57 @@ def test_organization_wards(client):
     data = data[0]
     assert data.get('name') == ward.name
     assert data.get('geo_boundary') == ward.geo_boundary
+
+
+def test_organization_category(client):
+    admin = setup_organization(client)
+    department = setup_department(client, admin)
+
+    category = Category(name="Health Category", department_id=department.get('id'))
+
+    response = client.post(
+        OrganizationsURL.categories,
+        json=category.get_data(),
+        headers=admin.headers
+    )
+
+    assert response.status_code == 201
+    assert response.json().get('success') is True
+
+
+def test_organization_department_staff(client):
+    admin = setup_organization(client)
+    department = setup_department(client, admin)
+
+    staff_member = User(
+        name="Staff Member",
+        email="staff@dept.com",
+        password="password123"
+    )
+    data = staff_member.get_register_data()
+    data["department_id"] = department.get('id')
+
+    response = client.post(
+        OrganizationsURL.departments_staff,
+        json=data,
+        headers=admin.headers
+    )
+
+    assert response.status_code == 201
+    assert response.json().get('success') is True
+
+    response = client.get(
+        OrganizationsURL.departments_staff,
+        headers=admin.headers
+    )
+
+    assert response.status_code == 200
+    assert response.json().get('success') is True
+
+    data = response.json().get('data')
+    assert isinstance(data, list)
+    assert len(data) == 1
+
+    data = data[0]
+    assert data.get('name') == staff_member.name
+    assert data.get('email') == staff_member.email

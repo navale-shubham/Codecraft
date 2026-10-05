@@ -2,9 +2,13 @@ from sqlmodel import Session
 
 from app.models import (
     User, UserCreate, Issue, IssueCreateRequest, IssueStatus,
-    IssueMedia, IssueMediaCreateRequest
+    IssueMedia, IssueMediaCreateRequest, IssueCategoryViewResponse,
+    Location
 )
-from app.crud import CRUDUser, CRUDIssue, CRUDIssueMedia
+from app.crud import (
+    CRUDUser, CRUDIssue, CRUDIssueMedia, CRUDWard,
+    CRUDIssueCategory
+)
 from app.core import get_password_hash, UserRole
 
 from .utils import generate_issue_number
@@ -14,6 +18,12 @@ class IssueNotFoundError(Exception):
     pass
 
 class ForbiddenError(Exception):
+    pass
+
+class WardNotFoundError(Exception):
+    pass
+
+class IssueCategoryNotFoundError(Exception):
     pass
 
 
@@ -32,19 +42,38 @@ def create_citizen(session: Session, payload: UserCreate) -> User:
     )
 
 
+def determine_issue_ward(
+    session: Session, 
+    location: Location
+):
+    return CRUDWard(session).get_nearest_ward(location)
+
+
 def create_issue(
     session: Session, 
     payload: IssueCreateRequest, 
     citizen: User
 ) -> Issue:
     issue_repo = CRUDIssue(session)
+    issue_category_repo = CRUDIssueCategory(session)
+
+    ward = determine_issue_ward(session, payload.location)
+    if not ward:
+        raise WardNotFoundError()
+    
+    organization = ward.organization
+    
+    issue_category = issue_category_repo.read(payload.category_id)
+    if not issue_category:
+        raise IssueCategoryNotFoundError()
+    department = issue_category.department
 
     issue = Issue(
         issue_number=generate_issue_number(),
         citizen_id=citizen.id,
-        organization_id="",
-        ward_id="10245144-a383-46a3-829a-85e3708ab8ba",
-        department_id="10245144-a383-46a3-829a-85e3708ab8ba",
+        organization_id=organization.id,
+        ward_id=ward.id,
+        department_id=department.id,
         category_id=payload.category_id,
         title=payload.title,
         description=payload.description,
@@ -83,3 +112,7 @@ def save_issue_media(
         file_url=payload.file_url
     )
     return media_repo.create(media)
+
+
+def get_issue_categories(session: Session):
+    return CRUDIssueCategory(session).read_all()

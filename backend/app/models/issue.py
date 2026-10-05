@@ -107,6 +107,7 @@ class IssueCreateResponse(SQLModel):
 
 
 class IssueCategoryViewResponse(SQLModel):
+    id: str
     name: str
 
 

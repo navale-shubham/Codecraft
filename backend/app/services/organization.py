@@ -1,4 +1,7 @@
 from sqlmodel import Session
+from sqlalchemy import func
+import json
+
 
 from app.models import (
     User, UserCreate, DepartmentCreateRequest, Organization, Department,
@@ -64,6 +67,10 @@ def create_organization(session: Session, payload: OrganizationCreateRequest):
     CRUDUser(session).update(organization_admin)
 
 
+def convert_geo_boundary(geo_boundary: dict):
+    return func.ST_SetSRID(func.ST_GeomFromGeoJSON(json.dumps(geo_boundary)), 4326)
+
+
 def create_ward(
     session: Session,
     organization: Organization,
@@ -73,7 +80,7 @@ def create_ward(
         Ward(
             organization_id=organization.id,
             name=payload.name,
-            geo_boundary=payload.geo_boundary,
+            geo_boundary=convert_geo_boundary(payload.geo_boundary),
         )
     )
 
@@ -90,3 +97,47 @@ def create_issue_category(
     )
 
     return CRUDIssueCategory(session).create(category)
+
+
+def create_department_staff(
+    session: Session,
+    organization: Organization,
+    payload: UserCreate
+):
+    if not payload.department_id:
+        raise ForbiddenError()
+
+    department = CRUDDepartment(session).read(payload.department_id)
+    if department is None:
+        raise ForbiddenError()
+    if department.organization_id != organization.id:
+        raise ForbiddenError()
+
+    CRUDUser(session).create(
+        User(
+            name=payload.name,
+            email=payload.email,
+            password_hash=get_password_hash(payload.password),
+            department_id=department.id,
+            organization_id=organization.id,
+            role=UserRole.DEPARTMENT_STAFF
+        )
+    )
+
+
+def get_department_staff(
+    session,
+    admin
+):
+    user_repo = CRUDUser(session)
+
+    departments = admin.organization.departments
+
+    return [
+        user
+        for department in departments
+        for user in user_repo.read_by_department_id(
+            department.id,
+            UserRole.DEPARTMENT_STAFF
+        )
+    ]

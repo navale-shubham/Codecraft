@@ -26,6 +26,7 @@ def create_access_token(subject: str) -> str:
 
 def decode_token(token: str) -> str | None:
     try:
-        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])["sub"]
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload.get("sub")
     except JWTError:
         return None

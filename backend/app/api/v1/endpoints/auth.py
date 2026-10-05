@@ -28,12 +28,8 @@ def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)]
 ):
     sub = decode_token(token)
-    if not sub:
+    if not sub or not (user := read_user_by_id(session, user_id=sub)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_TOKEN")
-    
-    user = read_user_by_id(session, user_id=sub)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, error_code="USER_NOT_FOUND")
     
     return user
 
@@ -68,7 +64,7 @@ def register_citizen(
 
 @app.post(
     "/login",
-    response_model=ApiResponse[Token],
+    response_model=Token,
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
@@ -88,11 +84,9 @@ def login(
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, error_code="INVALID_CREDENTIALS")
     
-    return ApiResponse[Token](
-        data = Token(
-            token_type="bearer",
-            access_token=create_access_token(user.id)
-        )
+    return Token(
+        token_type="bearer",
+        access_token=create_access_token(user.id)
     )
 
 

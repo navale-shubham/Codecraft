@@ -22,6 +22,7 @@ class CitizensURL:
     issues = base + "/issues"
     issue_media = lambda issue_id: CitizensURL.base + f"/issues/{issue_id}/media"
     issue = lambda issue_id: CitizensURL.base + f"/issues/{issue_id}"
+    issue_categories = base + "/issue-categories"
 
 
 class OrganizationsURL:
@@ -31,6 +32,7 @@ class OrganizationsURL:
     departments = base + "/departments"
     wards = base + "/wards"
     categories = base + "/categories"
+    departments_staff = base + "/departments/staff"
 
 
 class DepartmentURL:
@@ -39,8 +41,8 @@ class DepartmentURL:
     dashboard = base + "/dashboard"
     fieldstaff = base + "/fieldstaff"
     issues = base + "/issues"
-    assign_issue = base + "/issues/assign"
-    resolve_issue = base + "/issues/resolve"
+    assign_issue = lambda issue_id: DepartmentURL.issues + f"/{issue_id}/assign"
+    resolve_issue = lambda issue_id: DepartmentURL.issues + f"/{issue_id}/resolve"
 
 
 class FieldStaffURL:

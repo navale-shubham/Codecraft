@@ -15,7 +15,8 @@ from app.models import (
     IssueCreateResponse,
     Issue,
     IssueResponse,
-    IssueMediaCreateRequest
+    IssueMediaCreateRequest,
+    IssueCategoryViewResponse
 )
 from app.services import (
     is_citizen,
@@ -24,7 +25,8 @@ from app.services import (
     get_issues_by_citizen,
     IssueNotFoundError,
     ForbiddenError,
-    save_issue_media
+    save_issue_media,
+    get_issue_categories
 )
 from app.core import get_session, settings
 from app.core.utils import generate_file_name
@@ -169,9 +171,11 @@ def post_issue_media(
         IssueMediaCreateRequest(
             # pyrefly: ignore [bad-argument-type]
             issue_id=issue.id,
-            file_url=MEDIA_URL + file_path.name
+            file_url=f'{MEDIA_URL}/{issue.id}/{file_path.name}'
         )
     )
+
+    return ApiResponse[None]()
 
 
 @app.get(
@@ -216,3 +220,15 @@ def get_my_issue(
     issue: Annotated[Issue, Depends(require_issue_owner)]
 ):
     return ApiResponse[IssueResponse](data=issue)
+
+
+@app.get(
+    "/issue-categories",
+    response_model=ApiResponse[list[IssueCategoryViewResponse]],
+    status_code=status.HTTP_200_OK,
+)
+def get_categories(
+    session: Annotated[Session, Depends(get_session)]
+):
+    categories = get_issue_categories(session)
+    return ApiResponse[list[IssueCategoryViewResponse]](data=categories)

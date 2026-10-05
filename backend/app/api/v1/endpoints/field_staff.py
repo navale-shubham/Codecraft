@@ -45,7 +45,7 @@ def get_issues(
 
 @app.post(
     "/issues/{issue_id}/resolve",
-    response_model=ApiResponse[None],
+    response_model=ApiResponse[IssueResponse],
     status_code=status.HTTP_200_OK
 )
 def issue_resolution(

@@ -103,6 +103,8 @@ def field_staff(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             error_code="INTERNAL_SERVER_ERROR"
         )
+    
+    return ApiResponse[None]()
 
 
 @app.get(
@@ -145,7 +147,7 @@ def department_issues(
 
 
 @app.post(
-    "/issues/assign",
+    "/issues/{issue_id}/assign",
     response_model=ApiResponse[None],
     status_code=status.HTTP_201_CREATED
 )
@@ -167,10 +169,12 @@ def assign_issue(
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="FIELD_STAFF_DEPARTMENT_MISMATCH"
         )
+    
+    return ApiResponse[None]()
 
 
 @app.post(
-    "/issues/resolve",
+    "/issues/{issue_id}/resolve",
     response_model=ApiResponse[None],
     status_code=status.HTTP_200_OK
 )
@@ -185,3 +189,5 @@ def issue_resolution(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             error_code="INTERNAL_SERVER_ERROR"
         )
+    
+    return ApiResponse[None]()

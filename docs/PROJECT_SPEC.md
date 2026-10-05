@@ -248,6 +248,7 @@ RESOLVED     REOPEN (Assign Issue to Field Staff)
 organizations
 -------------
 id UUID PK
+admin_id UUID FK
 name VARCHAR(150)
 created_at TIMESTAMP
 ```
@@ -417,6 +418,17 @@ Request:
 }
 ```
 
+Response `201`:
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+---
+
 ### Register Organization
 
 ```http
@@ -434,36 +446,46 @@ Request:
 }
 ```
 
-### Login
-
-```http
-POST /api/v1/auth/login
-```
-
-Request:
-
-```json
-{
-  "username": "rahul@example.com",
-  "password": "********"
-}
-```
-
-Response:
+Response `201`:
 
 ```json
 {
   "success": true,
-  "data": {
-    "token_type": "bearer",
-    "access_token": "jwt_token"
-  }
+  "data": null
 }
 ```
 
 ---
 
+### Login
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/x-www-form-urlencoded
+```
+
+Request (form fields):
+
+```
+username=user@example.com&password=********
+```
+
+Response `200`:
+
+```json
+{
+  "token_type": "bearer",
+  "access_token": "jwt_token"
+}
+```
+
+> **Note:** The login endpoint follows the OAuth2 password flow. It returns the token object directly (not wrapped in the standard `ApiResponse` envelope).
+
+---
+
 ## 4.2 Citizen APIs
+
+All citizen endpoints require `Authorization: Bearer <token>` except `GET /api/v1/citizens/issue-categories`.
 
 ### Get Citizen Profile
 
@@ -471,17 +493,40 @@ Response:
 GET /api/v1/citizens/me
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
   "success": true,
   "data": {
+    "id": "uuid",
     "name": "Full Name",
-    "email": "example@xyz.com"
+    "email": "example@xyz.com",
+    "role": "CITIZEN"
   }
 }
 ```
+
+---
+
+### Get Issue Categories
+
+```http
+GET /api/v1/citizens/issue-categories
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "uuid", "name": "Potholes" }
+  ]
+}
+```
+
+---
 
 ### Create Issue
 
@@ -495,21 +540,21 @@ Request:
 {
   "title": "Large pothole near school",
   "description": "A large pothole is present on the main road.",
-  "categoryId": "cat_pothole",
+  "category_id": "uuid",
   "location": {
-    "latitude": 19.0760,
+    "latitude": 19.076,
     "longitude": 72.8777
   }
 }
 ```
 
-Response:
+Response `201`:
 
 ```json
 {
   "success": true,
   "data": {
-    "id": "issue_123"
+    "id": "uuid"
   }
 }
 ```
@@ -520,6 +565,22 @@ Response:
 
 ```http
 POST /api/v1/citizens/issues/{issue_id}/media
+Content-Type: multipart/form-data
+```
+
+Form field:
+
+| Field | Type     | Required |
+|-------|----------|----------|
+| `file` | binary  | ✅       |
+
+Response `201`:
+
+```json
+{
+  "success": true,
+  "data": null
+}
 ```
 
 ---
@@ -530,12 +591,33 @@ POST /api/v1/citizens/issues/{issue_id}/media
 GET /api/v1/citizens/issues
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
   "success": true,
-  "data": []
+  "data": [
+    {
+      "id": "uuid",
+      "issue_number": "CIV-2026-00123",
+      "citizen": { "name": "Rahul Sharma" },
+      "organization": { "name": "Mumbai Municipal Corporation" },
+      "ward": { "name": "Ward 12" },
+      "department": { "name": "Roads Department" },
+      "category": { "id": "uuid", "name": "Potholes" },
+      "title": "Large pothole near school",
+      "description": "...",
+      "latitude": 19.076,
+      "longitude": 72.8777,
+      "status": "IN_PROGRESS",
+      "assigned_to": { "name": "Amit Patel" },
+      "reported_at": "2026-10-01T10:00:00Z",
+      "due_at": "2026-10-08T18:00:00Z",
+      "resolved_at": null,
+      "created_at": "2026-10-01T10:00:00Z",
+      "media": [{ "file_url": "https://..." }]
+    }
+  ]
 }
 ```
 
@@ -547,45 +629,39 @@ Response:
 GET /api/v1/citizens/issues/{issue_id}
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
   "success": true,
   "data": {
-    "id": "issue_123",
+    "id": "uuid",
     "issue_number": "CIV-2026-00123",
-    "citizen_name": "",
-    "department_name": "Roads Department",
-    "category_name": "Potholes",
-    "ward_name": "",
-
+    "citizen": { "name": "Rahul Sharma" },
+    "organization": { "name": "Mumbai Municipal Corporation" },
+    "ward": { "name": "Ward 12" },
+    "department": { "name": "Roads Department" },
+    "category": { "id": "uuid", "name": "Potholes" },
     "title": "Large pothole near school",
     "description": "...",
-
-    "location": {
-      "latitude": 19.076,
-      "longitude": 72.8777
-    },
-
+    "latitude": 19.076,
+    "longitude": 72.8777,
     "status": "IN_PROGRESS",
-
-    "assigned_to_name": "",
-    "assignee_name": "",
-
-    "reported_at": "",
-    "due_at": "",
-    "resolved_at": "",
-    "closed_at": "",
-
-    "created_at": ""
+    "assigned_to": { "name": "Amit Patel" },
+    "reported_at": "2026-10-01T10:00:00Z",
+    "due_at": "2026-10-08T18:00:00Z",
+    "resolved_at": null,
+    "created_at": "2026-10-01T10:00:00Z",
+    "media": [{ "file_url": "https://..." }]
   }
 }
 ```
 
 ---
 
-## 4.3. Department Staff APIs
+## 4.3 Department Staff APIs
+
+All department endpoints require `Authorization: Bearer <token>`.
 
 ### Get Department Dashboard
 
@@ -593,7 +669,7 @@ Response:
 GET /api/v1/departments/dashboard
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
@@ -605,6 +681,25 @@ Response:
     "resolved_issues": 890,
     "overdue_issues": 40
   }
+}
+```
+
+---
+
+### Get Field Staff
+
+```http
+GET /api/v1/departments/fieldstaff
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "uuid", "name": "Amit Patel", "email": "amit@municipality.gov", "role": "FIELD_STAFF" }
+  ]
 }
 ```
 
@@ -622,24 +717,18 @@ Request:
 {
   "name": "Amit Patel",
   "email": "amit@municipality.gov",
-  "password": ""
+  "password": "secret"
 }
 ```
 
----
+> `organization_id` and `department_id` are optional fields; when omitted the backend infers them from the authenticated department staff's context.
 
-### Get Field Staff
-
-```http
-GET /api/v1/departments/fieldstaff
-```
-
-Response:
+Response `201`:
 
 ```json
 {
   "success": true,
-  "data": []
+  "data": null
 }
 ```
 
@@ -651,7 +740,7 @@ Response:
 GET /api/v1/departments/issues
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
@@ -665,32 +754,44 @@ Response:
 ### Assign Issue
 
 ```http
-POST /api/v1/departments/issues/assign
+POST /api/v1/departments/issues/{issue_id}/assign
 ```
 
 Request:
 
 ```json
 {
-  "issue_id": "",
-  "assigned_to": "usr_field_123",
-  "due_at": "2026-09-27T18:00:00Z"
+  "issue_id": "uuid",
+  "assigned_to_id": "uuid",
+  "due_at": "2026-10-08T18:00:00Z"
+}
+```
+
+Response `201`:
+
+```json
+{
+  "success": true,
+  "data": null
 }
 ```
 
 ---
 
-### Resolve Issue
+### Resolve Issue (Department Approval)
 
 ```http
-POST /api/v1/departments/issues/resolve
+POST /api/v1/departments/issues/{issue_id}/resolve
 ```
 
-Request:
+No request body required.
+
+Response `200`:
 
 ```json
 {
-  "issue_id": ""
+  "success": true,
+  "data": null
 }
 ```
 
@@ -698,11 +799,44 @@ Request:
 
 ## 4.4 Organization Admin APIs
 
+All organization endpoints require `Authorization: Bearer <token>`.
+
 ### Get Organization Dashboard
 
 ```http
 GET /api/v1/organizations/dashboard
 ```
+
+---
+
+### List Departments
+
+```http
+GET /api/v1/organizations/departments
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Roads Department",
+      "dashboard": {
+        "total_issues": 100,
+        "open_issues": 20,
+        "in_progress_issues": 15,
+        "resolved_issues": 65,
+        "overdue_issues": 5
+      }
+    }
+  ]
+}
+```
+
+---
 
 ### Create Department
 
@@ -718,20 +852,75 @@ Request:
 }
 ```
 
----
-
-### List Departments
-
-```http
-GET /api/v1/organizations/departments
-```
-
-Response:
+Response `201`:
 
 ```json
 {
   "success": true,
-  "data": []
+  "data": null
+}
+```
+
+---
+
+### List Department Staff
+
+```http
+GET /api/v1/organizations/departments/staff
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "uuid", "name": "Priya Mehta", "email": "priya@municipality.gov", "role": "DEPARTMENT_STAFF" }
+  ]
+}
+```
+
+---
+
+### Create Department Staff
+
+```http
+POST /api/v1/organizations/departments/staff
+```
+
+Request:
+
+```json
+{
+  "name": "Priya Mehta",
+  "email": "priya@municipality.gov",
+  "password": "secret",
+  "organization_id": "uuid",
+  "department_id": "uuid"
+}
+```
+
+---
+
+### Get Wards
+
+```http
+GET /api/v1/organizations/wards
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Ward 12",
+      "geo_boundary": {},
+      "issues": []
+    }
+  ]
 }
 ```
 
@@ -752,22 +941,31 @@ Request:
 }
 ```
 
-### Get Wards
-
-```http
-GET /api/v1/organizations/wards
-```
-
-Response:
+Response `201`:
 
 ```json
 {
   "success": true,
-  "data": {
-    "id": "ward_id",
-    "name": "ward_name",
-    "geo_boundary": {}
-  }
+  "data": null
+}
+```
+
+---
+
+### Get Categories
+
+```http
+GET /api/v1/organizations/categories
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "uuid", "name": "Potholes" }
+  ]
 }
 ```
 
@@ -784,7 +982,16 @@ Request:
 ```json
 {
   "name": "Potholes",
-  "department_id": "department id"
+  "department_id": "uuid"
+}
+```
+
+Response `201`:
+
+```json
+{
+  "success": true,
+  "data": null
 }
 ```
 
@@ -792,26 +999,72 @@ Request:
 
 ## 4.5 Field Staff APIs
 
+All field staff endpoints require `Authorization: Bearer <token>`.
+
 ### Get Assigned Issues
 
 ```http
 GET /api/v1/field-staff/issues
 ```
 
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": []
+}
+```
+
 ---
 
-### Resolve Issue
+### Resolve Issue (Field Staff)
 
 ```http
 POST /api/v1/field-staff/issues/{issue_id}/resolve
 ```
 
+No request body required.
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "issue_number": "CIV-2026-00123",
+    "status": "RESOLUTION_PENDING"
+  }
+}
+```
+
 ---
 
-## 4.6 Issue Media APIs
+## 4.6 Media Files
 
-### Get Issue Media File
+Issue media is served as static files via a dedicated mount (not an API route).
 
 ```http
-GET /media/{mediaPath}
+GET /media/{file_path}
+```
+
+- The server mounts the configured `MEDIA_PATH` directory under `/media`.
+- `file_url` values returned in `IssueMediaResponse` are paths relative to this mount (e.g. `/media/issues/abc123/photo.jpg`).
+- No authentication is required to fetch media files.
+
+---
+
+## 4.7 Schemas
+
+### IssueStatus
+
+```
+REPORTED | REJECTED | IN_PROGRESS | RESOLUTION_PENDING | RESOLVED
+```
+
+### UserRole
+
+```
+CITIZEN | ORG_ADMIN | DEPARTMENT_STAFF | FIELD_STAFF
 ```

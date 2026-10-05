@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Session
+from sqlmodel import SQLModel, Session, select
 
 
 class CRUDBase[ModelType: SQLModel]:
@@ -15,6 +15,9 @@ class CRUDBase[ModelType: SQLModel]:
 
     def read(self, id: str) -> ModelType | None:
         return self.session.get(self.MODEL, id)
+
+    def read_all(self):
+        return self.session.exec(select(self.MODEL)).all()
 
     def update(self, obj_in: ModelType) -> ModelType:
         self.session.add(obj_in)
