@@ -1,160 +1,159 @@
-"""
-Issue and Issue-related SQLModel Models.
-Includes: Issue, IssueMedia, IssueAssignment, IssueStatusHistory, IssueComment, IssueResolution, IssueReopen.
-"""
+from typing import TYPE_CHECKING
 
-from datetime import datetime
+if TYPE_CHECKING:
+    from .user import User, UserViewResponse
+    from .organization import Organization, OrganizationViewResponse
+    from .ward import Ward, WardViewResponse
+    from .department import Department, DepartmentViewResponse
+
+
+from enum import Enum
+from datetime import datetime, timezone
+from typing import Optional
+
 from sqlmodel import SQLModel, Field, Relationship
-from .base import generate_uuid
+
+from .base import generate_id, Location
+
+
+class IssueStatus(str, Enum):
+    REPORTED = "REPORTED"
+    REJECTED = "REJECTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    RESOLUTION_PENDING = "RESOLUTION_PENDING"
+    RESOLVED = "RESOLVED"
+
+
+class IssueCategory(SQLModel, table=True):
+    # pyrefly: ignore[bad-override]
+    __tablename__ = "issue_categories"
+
+    id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
+    organization_id: str = Field(foreign_key="organizations.id", max_length=36)
+    department_id: str = Field(foreign_key="departments.id", max_length=36)
+    name: str = Field(max_length=150)
+
+    issues: list[Issue] = Relationship(back_populates="category")
+    organization: Organization = Relationship(back_populates="categories")
+    department: Department = Relationship(back_populates="categories")
 
 
 class Issue(SQLModel, table=True):
+    # pyrefly: ignore[bad-override]
     __tablename__ = "issues"
 
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    issue_number: str = Field(max_length=30, unique=True)
+    id: str | None = Field(default_factory=generate_id, primary_key=True, max_length=36)
+    issue_number: str = Field(max_length=50, unique=True)
     citizen_id: str = Field(foreign_key="users.id", max_length=36)
     organization_id: str = Field(foreign_key="organizations.id", max_length=36)
+    ward_id: str = Field(foreign_key="wards.id", max_length=36)
     department_id: str = Field(foreign_key="departments.id", max_length=36)
     category_id: str = Field(foreign_key="issue_categories.id", max_length=36)
-    ward_id: str = Field(foreign_key="wards.id", max_length=36)
 
     title: str = Field(max_length=255)
     description: str
 
-    # GPS location data
-    latitude: float | None = None
-    longitude: float | None = None
-    location_accuracy: float | None = Field(default=None, description="GPS accuracy in meters")
-    location_captured_at: datetime | None = Field(default=None, description="When the GPS fix was taken")
-    address: str
+    latitude: float
+    longitude: float
 
-    priority: str = Field(default="MEDIUM", max_length=20)
-    # LOW, MEDIUM, HIGH, CRITICAL
-    status: str = Field(default="REPORTED", max_length=30)
-    # REPORTED, UNDER_REVIEW, REJECTED, ASSIGNED, IN_PROGRESS, RESOLUTION_PENDING, RESOLVED, CLOSED, REOPENED, ESCALATED
+    status: IssueStatus = Field(default=IssueStatus.REPORTED, max_length=30)
 
-    # Auto-classification metadata
-    auto_classified: bool = Field(default=False, description="Whether category/ward were auto-determined")
-    classification_confidence: float | None = Field(default=None, description="AI classification confidence 0-1")
+    assigned_to_id: str | None = Field(default=None, foreign_key="users.id", max_length=36)
 
-    assigned_to: str | None = Field(default=None, foreign_key="users.id", max_length=36)
-
-    reported_at: datetime = Field(default_factory=datetime.utcnow)
+    reported_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     due_at: datetime | None = None
     resolved_at: datetime | None = None
     closed_at: datetime | None = None
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    department: Department | None = Relationship(
-        back_populates="issues",
-        sa_relationship_kwargs={"foreign_keys": "[Issue.department_id]"}
+    citizen: User = Relationship(
+        back_populates="created_issues",
+        sa_relationship_kwargs={ "foreign_keys": "[Issue.citizen_id]" }
     )
-    ward: Ward | None = Relationship(
-        back_populates="issues",
-        sa_relationship_kwargs={"foreign_keys": "[Issue.ward_id]"}
+    assigned_to: Optional[User] = Relationship(
+        back_populates="assigned_issues",
+        sa_relationship_kwargs={ "foreign_keys": "[Issue.assigned_to_id]" }
     )
+    organization: Organization = Relationship(back_populates="issues")
+    ward: Ward = Relationship(back_populates="issues")
+    department: Department = Relationship(back_populates="issues")
+    category: IssueCategory = Relationship(back_populates="issues")
     media: list[IssueMedia] = Relationship(back_populates="issue")
-    comments: list[IssueComment] = Relationship(back_populates="issue")
-    history: list[IssueStatusHistory] = Relationship(back_populates="issue")
-    assignments: list[IssueAssignment] = Relationship(back_populates="issue")
-    resolution: IssueResolution | None = Relationship(
-        back_populates="issue",
-        sa_relationship_kwargs={"uselist": False}
-    )
-    reopens: list[IssueReopen] = Relationship(back_populates="issue")
 
 
 class IssueMedia(SQLModel, table=True):
+    # pyrefly: ignore[bad-override]
     __tablename__ = "issue_media"
 
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
     issue_id: str = Field(foreign_key="issues.id", max_length=36)
-    uploaded_by: str = Field(foreign_key="users.id", max_length=36)
-    media_type: str = Field(default="IMAGE", max_length=20)
-    # IMAGE, VIDEO, DOCUMENT
     file_url: str
-    thumbnail_url: str | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    issue: Issue | None = Relationship(back_populates="media")
-
-
-class IssueAssignment(SQLModel, table=True):
-    __tablename__ = "issue_assignments"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    issue_id: str = Field(foreign_key="issues.id", max_length=36)
-    assigned_to: str = Field(foreign_key="users.id", max_length=36)
-    assigned_by: str = Field(foreign_key="users.id", max_length=36)
-    assigned_at: datetime = Field(default_factory=datetime.utcnow)
-    unassigned_at: datetime | None = None
-    reason: str | None = None
-
-    issue: Issue | None = Relationship(back_populates="assignments")
+    issue: Issue = Relationship(back_populates="media")
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-class IssueStatusHistory(SQLModel, table=True):
-    __tablename__ = "issue_status_history"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    issue_id: str = Field(foreign_key="issues.id", max_length=36)
-    old_status: str | None = Field(default=None, max_length=30)
-    new_status: str = Field(max_length=30)
-    changed_by: str = Field(foreign_key="users.id", max_length=36)
-    reason: str | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-    issue: Issue | None = Relationship(back_populates="history")
+class IssueCreateRequest(SQLModel):
+    title: str
+    description: str
+    category_id: str
+    location: Location
 
 
-class IssueComment(SQLModel, table=True):
-    __tablename__ = "issue_comments"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    issue_id: str = Field(foreign_key="issues.id", max_length=36)
-    user_id: str = Field(foreign_key="users.id", max_length=36)
-    comment: str
-    is_internal: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-    issue: Issue | None = Relationship(back_populates="comments")
+class IssueCreateResponse(SQLModel):
+    id: str | None
 
 
-class IssueResolution(SQLModel, table=True):
-    __tablename__ = "issue_resolutions"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    issue_id: str = Field(foreign_key="issues.id", max_length=36)
-    resolved_by: str = Field(foreign_key="users.id", max_length=36)
-    resolution_description: str
-    resolution_type: str = Field(default="REPAIRED", max_length=50)
-    # REPAIRED, CLEANED, REPLACED, REMOVED, INSPECTED, NO_ACTION_REQUIRED, DUPLICATE
-    evidence_media_id: str | None = Field(default=None, max_length=36)
-    evidence_media_url: str | None = None
-    resolved_at: datetime = Field(default_factory=datetime.utcnow)
-    citizen_verified: bool | None = None
-    citizen_verified_at: datetime | None = None
-
-    issue: Issue | None = Relationship(back_populates="resolution")
+class IssueCategoryViewResponse(SQLModel):
+    id: str
+    name: str
 
 
-class IssueReopen(SQLModel, table=True):
-    __tablename__ = "issue_reopens"
-
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
-    issue_id: str = Field(foreign_key="issues.id", max_length=36)
-    reopened_by: str = Field(foreign_key="users.id", max_length=36)
-    reason: str
-    media_url: str | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-    issue: Issue | None = Relationship(back_populates="reopens")
+class IssueMediaCreateRequest(SQLModel):
+    issue_id: str
+    file_url: str
 
 
-# Avoid circular imports — import here for relationship resolution
-from .department import Department  # noqa: E402, F401
-from .ward import Ward  # noqa: E402, F401
+class IssueResponse(SQLModel):
+    id: str
+    issue_number: str
+    citizen: UserViewResponse
+    organization: OrganizationViewResponse
+    ward: WardViewResponse
+    department: DepartmentViewResponse
+    category: IssueCategoryViewResponse
+
+    title: str
+    description: str
+
+    latitude: float
+    longitude: float
+
+    status: IssueStatus
+
+    assigned_to: UserViewResponse | None
+
+    reported_at: datetime
+    due_at: datetime | None
+    resolved_at: datetime | None
+
+    created_at: datetime
+
+    media: list[IssueMediaResponse]
+
+
+class IssueMediaResponse(SQLModel):
+    file_url: str
+
+
+class IssueAssignementRequest(SQLModel):
+    issue_id: str
+    assigned_to_id: str
+    due_at: datetime
+
+
+class IssueCategoryCreateRequest(SQLModel):
+    name: str
+    department_id: str

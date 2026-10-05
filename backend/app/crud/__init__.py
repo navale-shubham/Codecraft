@@ -1,7 +1,7 @@
-from .crud_ward import ward
-from .crud_category import category
-from .crud_department import department
-from .crud_issue import issue
-from .crud_notification import notification
-from .crud_user import user
-
+from .department import *
+from .issue_category import *
+from .issue_media import *
+from .organization import *
+from .user import *
+from .ward import *
+from .issue import *

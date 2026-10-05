@@ -1,12 +1,32 @@
-"""
-Base model configuration and common model utilities.
-"""
 import uuid
-from sqlmodel import SQLModel
+from typing import TypeVar, Generic
+
+from sqlmodel import SQLModel, Field
+from pydantic import BaseModel
 
 
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
+def generate_id() -> str:
+    return str(uuid.uuid7())
 
 
-__all__ = ["SQLModel", "generate_uuid"]
+ModelType = TypeVar("ModelType")
+
+
+class ApiResponse(BaseModel, Generic[ModelType]):
+    success: bool = True
+    data: ModelType = Field(default=None)
+
+
+class ApiErrorResponse(BaseModel):
+    success: bool = False
+    error_code: str
+
+
+class Token(BaseModel):
+    token_type: str = "bearer"
+    access_token: str
+
+
+class Location(SQLModel):
+    latitude: float
+    longitude: float

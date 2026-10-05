@@ -1,9 +1,9 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.api.v1 import api
-from app.core.database import create_db_and_tables
 
 
 app = FastAPI(
@@ -14,6 +14,10 @@ app = FastAPI(
     openapi_url="/api/v1/openapi.json"
 )
 
+# Mount media directory
+app.mount("/media", StaticFiles(directory=settings.MEDIA_PATH), name="media")
+
+
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
@@ -22,6 +26,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Root & Health Endpoints
 @app.get("/", tags=["Health"])

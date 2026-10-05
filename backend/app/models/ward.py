@@ -1,36 +1,57 @@
-"""
-Ward SQLModel Model.
-"""
-from typing import Any, TYPE_CHECKING
-from datetime import datetime
-from sqlmodel import SQLModel, Field, Relationship, Column
-from sqlalchemy import JSON
-from .base import generate_uuid
-from .associations import DepartmentWardLink
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .issue import Issue, IssueResponse
     from .organization import Organization
-    from .department import Department
-    from .issue import Issue
+
+
+from datetime import datetime, timezone
+
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
+from sqlmodel import SQLModel, Field, Relationship
+import shapely
+
+from .base import generate_id
 
 
 class Ward(SQLModel, table=True):
+    # pyrefly: ignore[bad-override]
     __tablename__ = "wards"
 
-    id: str = Field(default_factory=generate_uuid, primary_key=True, max_length=36)
+    id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
     organization_id: str = Field(foreign_key="organizations.id", max_length=36)
     name: str = Field(max_length=100)
-    code: str = Field(max_length=50)
-    description: str | None = None
-    # GeoJSON boundary polygon for GPS-to-ward mapping
-    boundary_geojson: Any | None = Field(default=None, sa_column=Column(JSON))
-    # Centroid coordinates for proximity-based ward matching
-    center_latitude: float | None = Field(default=None)
-    center_longitude: float | None = Field(default=None)
-    status: str = Field(default="ACTIVE", max_length=20)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    geo_boundary: object = Field(
+        sa_type=Geometry(
+            geometry_type='POLYGON',
+            srid=4326
+        )
+    )
 
-    organization: Organization | None = Relationship(back_populates="wards")
-    departments: list[Department] = Relationship(back_populates="wards", link_model=DepartmentWardLink)
+    organization: Organization = Relationship(back_populates="wards")
     issues: list[Issue] = Relationship(back_populates="ward")
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+    @property
+    def geo_boundary_str(self):
+        # pyrefly: ignore [bad-argument-type]
+        return shapely.geometry.mapping(to_shape(self.geo_boundary))
+
+
+class WardViewResponse(SQLModel):
+    name: str
+
+
+class WardResponse(SQLModel):
+    id: str
+    name: str
+    geo_boundary: dict
+    issues: list[IssueResponse]
+
+
+class WardCreateRequest(SQLModel):
+    name: str
+    geo_boundary: dict
