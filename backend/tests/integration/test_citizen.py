@@ -41,8 +41,8 @@ def test_citizen_issue(client):
         description="Test Description",
         category_id=category['id'],
         location=Location(
-            latitude=12.345,
-            longitude=15.001,
+            latitude=19.577123,
+            longitude=74.445428,
         ),
     )
 

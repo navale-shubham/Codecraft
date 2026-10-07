@@ -1,8 +1,8 @@
 """Create tables
 
-Revision ID: 5c1ac1e04c4b
+Revision ID: 5258a412b1ad
 Revises: 
-Create Date: 2026-10-05 16:23:05.603534
+Create Date: 2026-10-07 06:58:24.817708
 
 """
 from typing import Sequence, Union
@@ -14,10 +14,11 @@ import geoalchemy2
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5c1ac1e04c4b'
+revision: str = '5258a412b1ad'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
 
 def upgrade() -> None:
     """Upgrade schema."""
