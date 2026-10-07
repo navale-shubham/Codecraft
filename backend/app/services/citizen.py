@@ -3,7 +3,7 @@ from sqlmodel import Session
 from app.models import (
     User, UserCreate, Issue, IssueCreateRequest, IssueStatus,
     IssueMedia, IssueMediaCreateRequest, IssueCategoryViewResponse,
-    Location
+    Location, MediaType
 )
 from app.crud import (
     CRUDUser, CRUDIssue, CRUDIssueMedia, CRUDWard,
@@ -109,7 +109,8 @@ def save_issue_media(
 
     media = IssueMedia(
         issue_id=payload.issue_id,
-        file_url=payload.file_url
+        file_url=payload.file_url,
+        type=MediaType.QUERY
     )
     return media_repo.create(media)
 

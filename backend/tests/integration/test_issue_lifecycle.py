@@ -29,7 +29,7 @@ def test_issue_lifecycle(client):
     field_staff = setup_field_staff(client, department.get('id'), department_staff)
     citizen = setup_citizen(client)
     category = setup_issue_category(client, organization_admin, department)
-    
+
     # Issue Creation
     issue = Issue(
         title="Test Issue",
@@ -56,7 +56,7 @@ def test_issue_lifecycle(client):
     response = client.post(
         CitizensURL.issue_media(issue_id),
         headers=citizen.headers,
-        files=issue.get_media_data()
+        files=Issue.get_media_data()
     )
 
     assert response.status_code == 201
@@ -97,6 +97,14 @@ def test_issue_lifecycle(client):
     )
 
     assert response.status_code == 200
+
+    response = client.post(
+        FieldStaffURL.resolve_issue_media(issue_id),
+        headers=field_staff.headers,
+        files=Issue.get_media_data()
+    )
+
+    assert response.status_code == 201
 
     # Department Staff Issue Resolve
     response = client.post(

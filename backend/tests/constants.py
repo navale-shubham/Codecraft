@@ -50,6 +50,7 @@ class FieldStaffURL:
 
     issues = base + "/issues"
     resolve_issue = lambda issue_id: FieldStaffURL.base + f"/issues/{issue_id}/resolve"
+    resolve_issue_media = lambda issue_id: FieldStaffURL.base + f'/issues/{issue_id}/resolve/media'
 
 
 @dataclass
@@ -104,7 +105,8 @@ class Issue:
             "location": self.location.get_data(),
         }
     
-    def get_media_data(self) -> dict:
+    @staticmethod
+    def get_media_data() -> dict:
         file = io.BytesIO(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00")
         file.name = "test_image.jpg"
         return {

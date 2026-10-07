@@ -24,6 +24,11 @@ class IssueStatus(str, Enum):
     RESOLVED = "RESOLVED"
 
 
+class MediaType(str, Enum):
+    QUERY = 'QUERY'
+    RESOLUTION = 'RESOLUTION'
+
+
 class IssueCategory(SQLModel, table=True):
     # pyrefly: ignore[bad-override]
     __tablename__ = "issue_categories"
@@ -89,6 +94,7 @@ class IssueMedia(SQLModel, table=True):
     id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
     issue_id: str = Field(foreign_key="issues.id", max_length=36)
     file_url: str
+    type: MediaType
 
     issue: Issue = Relationship(back_populates="media")
     
@@ -114,6 +120,7 @@ class IssueCategoryViewResponse(SQLModel):
 class IssueMediaCreateRequest(SQLModel):
     issue_id: str
     file_url: str
+    type: MediaType | None = None
 
 
 class IssueResponse(SQLModel):
@@ -146,6 +153,7 @@ class IssueResponse(SQLModel):
 
 class IssueMediaResponse(SQLModel):
     file_url: str
+    type: MediaType
 
 
 class IssueAssignementRequest(SQLModel):
