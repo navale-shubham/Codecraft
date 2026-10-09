@@ -1,0 +1,8 @@
+import { BarChart3, Bell, Building2, ClipboardList, FilePlus2, LayoutDashboard, Map, Settings, UserRound, Users } from 'lucide-react'
+const item = (label, path, icon, permission) => ({ label, path, icon, permission })
+export const navigation = {
+  CITIZEN: [item('Dashboard', '/citizen/dashboard', LayoutDashboard), item('Report Issue', '/citizen/report', FilePlus2), item('My Issues', '/citizen/issues', ClipboardList), item('Notifications', '/citizen/notifications', Bell), item('Profile', '/citizen/profile', UserRound)],
+  ORG_ADMIN: [item('Dashboard', '/organization/dashboard', LayoutDashboard), item('Departments', '/organization/departments', Building2, 'DEPARTMENT_MANAGE'), item('Staff', '/organization/staff', Users, 'USER_MANAGE'), item('Wards / Areas', '/organization/areas', Map), item('Categories', '/organization/categories', Settings, 'CATEGORY_MANAGE'), item('Analytics', '/organization/analytics', BarChart3, 'ANALYTICS_VIEW'), item('Notifications', '/organization/notifications', Bell), item('Profile', '/profile', UserRound)],
+  DEPARTMENT_STAFF: [item('Dashboard', '/department/dashboard', LayoutDashboard), item('Issues', '/department/issues', ClipboardList), item('Assignments', '/department/assignments', ClipboardList, 'ISSUE_ASSIGN'), item('Staff', '/department/staff', Users), item('Analytics', '/department/analytics', BarChart3), item('Notifications', '/department/notifications', Bell), item('Profile', '/profile', UserRound)],
+  FIELD_STAFF: [item('Dashboard', '/field-staff/dashboard', LayoutDashboard), item('My Assignments', '/field-staff/assignments', ClipboardList), item('Updates', '/field-staff/updates', Bell), item('Notifications', '/field-staff/notifications', Bell), item('Profile', '/profile', UserRound)],
+}

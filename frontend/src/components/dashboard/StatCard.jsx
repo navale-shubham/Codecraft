@@ -1,0 +1,2 @@
+import { ArrowDownRight, ArrowUpRight, ClipboardList } from 'lucide-react'
+export default function StatCard({ label, value, detail, icon: Icon = ClipboardList, tone = 'blue' }) { return <div className="stat-card surface"><div className={`stat-icon stat-${tone}`}><Icon size={18} /></div><div><p>{label}</p><strong>{value}</strong>{detail && <small className={detail.startsWith('+') ? 'positive' : ''}>{detail.startsWith('+') ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}{detail}</small>}</div></div> }

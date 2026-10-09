@@ -1,0 +1,129 @@
+.ward-boundary-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  background: linear-gradient(150deg, #fff 0%, #f8faff 100%);
+  border: 1px solid var(--color-indigo-outline-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.ward-section-heading h4 {
+  margin: 0.15rem 0 0.35rem;
+  color: var(--color-text);
+  font-size: 1.05rem;
+}
+
+.ward-section-heading .muted { margin: 0; }
+
+.ward-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.ward-map-toolbar .btn { min-height: 2.5rem; }
+
+.ward-map-instruction,
+.ward-map-note,
+.ward-live-point,
+.ward-copy-message {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+.ward-map-wrap {
+  position: relative;
+  overflow: hidden;
+  min-height: 500px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #eaf0f8;
+  box-shadow: var(--shadow-sm);
+}
+
+.ward-map-canvas { width: 100%; height: 500px; }
+
+.ward-map-overlay,
+.ward-map-message {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  min-height: 100%;
+  place-content: center;
+  gap: 0.65rem;
+  padding: 1.5rem;
+  color: var(--color-text-secondary);
+  background: linear-gradient(140deg, #f8faff, #eef2ff);
+  text-align: center;
+}
+
+.ward-map-overlay { inset: 0; }
+.ward-map-error { color: var(--color-danger); }
+
+.ward-map-message {
+  position: relative;
+  min-height: 250px;
+  color: var(--color-indigo-dark);
+  border: 1px dashed var(--color-indigo-outline);
+  border-radius: var(--radius-lg);
+}
+
+.ward-map-message svg { margin: auto; }
+.ward-map-message span { color: var(--color-text-secondary); }
+
+.ward-map-popover {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: grid;
+  min-width: 12rem;
+  gap: 0.35rem;
+  padding: 0.9rem 2rem 0.9rem 0.9rem;
+  color: var(--color-text-secondary);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-size: 0.78rem;
+}
+
+.ward-map-popover strong { color: var(--color-text); font-size: 0.9rem; }
+.ward-map-popover button { position: absolute; top: 0.4rem; right: 0.55rem; border: 0; background: transparent; color: var(--color-text-secondary); font-size: 1.2rem; cursor: pointer; }
+
+.ward-coordinate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.35rem;
+}
+
+.ward-coordinate-header > div { display: grid; gap: 0.2rem; }
+.ward-coordinate-header strong { color: var(--color-text); font-size: 0.94rem; }
+.ward-coordinate-header span { color: var(--color-text-secondary); font-size: 0.78rem; }
+.ward-coordinate-scroll { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.ward-coordinate-table { width: 100%; min-width: 25rem; border-collapse: collapse; font-size: 0.82rem; }
+.ward-coordinate-table th,
+.ward-coordinate-table td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--color-border-subtle); text-align: left; white-space: nowrap; }
+.ward-coordinate-table th { color: var(--color-text-secondary); background: #f8faff; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.ward-coordinate-table td { color: var(--color-text-strong); font-variant-numeric: tabular-nums; }
+.ward-coordinate-table tbody tr:last-child td { border-bottom: 0; }
+.ward-coordinate-table tbody tr:only-child td[colspan] { color: var(--color-text-muted); text-align: center; white-space: normal; }
+
+.ward-json-details { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.ward-json-details summary { padding: 0.8rem 0.9rem; color: var(--color-indigo-dark); background: #f8faff; cursor: pointer; font-size: 0.82rem; font-weight: 750; }
+.ward-json-details summary:focus-visible,
+.ward-map-toolbar .btn:focus-visible,
+.ward-map-popover button:focus-visible { outline: 3px solid var(--color-indigo-outline); outline-offset: 2px; }
+.ward-json-details pre { overflow: auto; max-height: 16rem; margin: 0; padding: 0.9rem; color: var(--color-text-strong); background: #fff; font-size: 0.76rem; }
+.ward-copy-message { color: var(--color-success); font-weight: 700; }
+
+@media (max-width: 700px) {
+  .ward-boundary-card { padding: 0.85rem; }
+  .ward-map-wrap { min-height: 350px; }
+  .ward-map-canvas { height: 350px; }
+  .ward-coordinate-header { align-items: flex-start; flex-direction: column; }
+  .ward-map-toolbar .btn { flex: 1 1 auto; }
+}

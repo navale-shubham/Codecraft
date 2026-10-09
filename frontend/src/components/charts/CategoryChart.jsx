@@ -1,0 +1,2 @@
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+export default function CategoryChart({ data }) { return <ResponsiveContainer width="100%" height={250}><PieChart><Pie data={data} dataKey="value" nameKey="name" outerRadius={90} label>{data.map((entry, index) => <Cell key={entry.name} fill={['#2563eb','#4f46e5','#7c3aed','#f59e0b','#22c55e'][index]} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer> }
