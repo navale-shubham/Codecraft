@@ -3,7 +3,7 @@ name = "civicpulse"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi[standard]>=0.110.0",
+    "fastapi[standard]>=0.141.1",
     "sqlmodel>=0.0.22",
     "psycopg2-binary>=2.9.9",
     "python-jose[cryptography]>=3.3.0",
@@ -12,6 +12,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "aiofiles>=25.1.0",
     "pwdlib[argon2]>=0.3.1",
+    "google-genai>=2.31.0",
 ]
 
 [dependency-groups]

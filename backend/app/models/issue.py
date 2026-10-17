@@ -36,7 +36,7 @@ class IssueCategory(SQLModel, table=True):
     id: str = Field(default_factory=generate_id, primary_key=True, max_length=36)
     organization_id: str = Field(foreign_key="organizations.id", max_length=36)
     department_id: str = Field(foreign_key="departments.id", max_length=36)
-    name: str = Field(max_length=150)
+    name: str = Field(max_length=150, unique=True)
 
     issues: list[Issue] = Relationship(back_populates="category")
     organization: Organization = Relationship(back_populates="categories")
@@ -104,8 +104,8 @@ class IssueMedia(SQLModel, table=True):
 class IssueCreateRequest(SQLModel):
     title: str
     description: str
-    category_id: str
-    location: Location
+    latitude: float
+    longitude: float
 
 
 class IssueCreateResponse(SQLModel):

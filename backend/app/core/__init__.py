@@ -9,3 +9,4 @@ from .security import (
     decode_token,
 )
 from .utils import *
+from .image_classification import *

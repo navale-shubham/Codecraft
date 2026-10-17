@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-import io
 import uuid
+import json
+from io import BytesIO
 
 
 class URL:
@@ -79,39 +80,53 @@ class User:
 
 
 @dataclass
-class Location:
-    latitude: float
-    longitude: float
-
-    def get_data(self) -> dict:
-        return {
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-        }
-
-
-@dataclass
 class Issue:
     title: str
     description: str
-    category_id: str
-    location: Location
+    latitude: float
+    longitude: float
+
+    category: str = 'pothole'
 
     def get_data(self) -> dict:
         return {
             "title": self.title,
             "description": self.description,
-            "category_id": self.category_id,
-            "location": self.location.get_data(),
+            "latitude": self.latitude,
+            "longitude": self.longitude,
         }
     
     @staticmethod
-    def get_media_data() -> dict:
-        file = io.BytesIO(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00")
-        file.name = "test_image.jpg"
-        return {
-            "file": file
-        }
+    def get_media_data():
+        file_names = [
+            'pothole-1.jpg',
+            'pothole-2.jpg',
+            'pothole-3.jpg',
+            'pothole-4.jpg'
+        ]
+        files = []
+        
+        for file_name in file_names:
+            with open(f'backend/tests/assets/{file_name}', 'rb') as file:
+                file_data = file.read()
+                files.append(('files', (file_name, file_data, 'image/jpeg')))
+
+        return files
+    
+    @staticmethod
+    def get_resolve_media_data():
+        file_names = [
+            'pothole-fixed-1.jpg',
+            'pothole-fixed-2.jpg'
+        ]
+        files = []
+
+        for file_name in file_names:
+            with open(f'backend/tests/assets/{file_name}', 'rb') as file:
+                file_data = file.read()
+                files.append(('files', (file_name, file_data, 'image/jpeg')))
+
+        return files
 
 
 @dataclass

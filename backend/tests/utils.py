@@ -207,7 +207,7 @@ def setup_ward(client, organization_admin):
 
 def setup_issue_category(client, admin, department):
     category_data = {
-        "name": "Test Category",
+        "name": "Pothole",
         "department_id": department['id']
     }
 
