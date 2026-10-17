@@ -22,4 +22,7 @@ class Settings:
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_FILE_TYPES: set[str] = {"image/jpeg", "image/png", "image/jpg"}
 
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+
 settings = Settings()

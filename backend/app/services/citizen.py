@@ -1,15 +1,18 @@
+from io import BytesIO
+
+from fastapi import UploadFile
 from sqlmodel import Session
 
 from app.models import (
     User, UserCreate, Issue, IssueCreateRequest, IssueStatus,
     IssueMedia, IssueMediaCreateRequest, IssueCategoryViewResponse,
-    Location
+    Location, MediaType, IssueCategory
 )
 from app.crud import (
     CRUDUser, CRUDIssue, CRUDIssueMedia, CRUDWard,
     CRUDIssueCategory
 )
-from app.core import get_password_hash, UserRole
+from app.core import get_password_hash, UserRole, classify_images
 
 from .utils import generate_issue_number
 
@@ -44,28 +47,52 @@ def create_citizen(session: Session, payload: UserCreate) -> User:
 
 def determine_issue_ward(
     session: Session, 
-    location: Location
+    latitude: float,
+    longitude: float
 ):
-    return CRUDWard(session).get_nearest_ward(location)
+    return CRUDWard(session).get_nearest_ward(Location(latitude=latitude, longitude=longitude))
+
+
+def determine_issue_category(
+    session: Session,
+    files: list[UploadFile],
+    organization_id: str
+):
+    category_repo = CRUDIssueCategory(session)
+
+    categories = category_repo.read_by_organization(organization_id)
+    if not categories:
+        raise IssueCategoryNotFoundError()
+
+    images = [(BytesIO(file.file.read()), file.content_type) for file in files]
+    category_names = [category.name for category in categories]
+
+    # pyrefly: ignore[bad-argument-type]
+    category_name = classify_images(images, category_names)
+    if not category_name:
+        raise IssueCategoryNotFoundError()
+    
+    issue_category = category_repo.read_by_name(category_name)
+    if not issue_category:
+        raise IssueCategoryNotFoundError()
+
+    return issue_category
 
 
 def create_issue(
     session: Session, 
     payload: IssueCreateRequest, 
-    citizen: User
+    citizen: User,
+    files: list[UploadFile]
 ) -> Issue:
     issue_repo = CRUDIssue(session)
-    issue_category_repo = CRUDIssueCategory(session)
 
-    ward = determine_issue_ward(session, payload.location)
+    ward = determine_issue_ward(session, payload.latitude, payload.longitude)
     if not ward:
         raise WardNotFoundError()
     
     organization = ward.organization
-    
-    issue_category = issue_category_repo.read(payload.category_id)
-    if not issue_category:
-        raise IssueCategoryNotFoundError()
+    issue_category = determine_issue_category(session, files, organization.id)
     department = issue_category.department
 
     issue = Issue(
@@ -74,11 +101,11 @@ def create_issue(
         organization_id=organization.id,
         ward_id=ward.id,
         department_id=department.id,
-        category_id=payload.category_id,
+        category_id=issue_category.id,
         title=payload.title,
         description=payload.description,
-        latitude=payload.location.latitude,
-        longitude=payload.location.longitude,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
         status=IssueStatus.REPORTED,
     )
 
@@ -109,10 +136,7 @@ def save_issue_media(
 
     media = IssueMedia(
         issue_id=payload.issue_id,
-        file_url=payload.file_url
+        file_url=payload.file_url,
+        type=MediaType.QUERY
     )
     return media_repo.create(media)
-
-
-def get_issue_categories(session: Session):
-    return CRUDIssueCategory(session).read_all()

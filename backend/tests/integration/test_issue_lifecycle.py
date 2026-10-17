@@ -6,8 +6,7 @@ from tests.constants import (
     DepartmentURL,
     CitizensURL,
     FieldStaffURL,
-    Issue,
-    Location
+    Issue
 )
 from tests.utils import (
     setup_organization,
@@ -29,37 +28,26 @@ def test_issue_lifecycle(client):
     field_staff = setup_field_staff(client, department.get('id'), department_staff)
     citizen = setup_citizen(client)
     category = setup_issue_category(client, organization_admin, department)
-    
+
     # Issue Creation
     issue = Issue(
         title="Test Issue",
         description="Test Description",
-        category_id=category['id'],
-        location=Location(
-            latitude=19.577123,
-            longitude=74.445428,
-        ),
+        latitude=19.577123,
+        longitude=74.445428,
     )
 
     response = client.post(
         CitizensURL.issues,
-        json=issue.get_data(),
+        data=issue.get_data(),
         headers=citizen.headers,
+        files=issue.get_media_data()
     )
 
     assert response.status_code == 201
 
     data = response.json().get("data")
     issue_id = data.get("id")
-
-    # Issue Upload Media
-    response = client.post(
-        CitizensURL.issue_media(issue_id),
-        headers=citizen.headers,
-        files=issue.get_media_data()
-    )
-
-    assert response.status_code == 201
 
     # Department Staff Issue Assign
     response = client.get(
@@ -94,6 +82,7 @@ def test_issue_lifecycle(client):
     response = client.post(
         FieldStaffURL.resolve_issue(issue_id),
         headers=field_staff.headers,
+        files=Issue.get_resolve_media_data()
     )
 
     assert response.status_code == 200
