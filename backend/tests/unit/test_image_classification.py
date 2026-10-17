@@ -7,9 +7,9 @@ from app.core import classify_image, classify_images
 def test_image_classification():
     categories = ['Garbage', 'Pothole', 'Water Leakage']
     images_category = [
-        (Path(__file__).parent / 'assets' / 'garbage.jpg', 'Garbage'),
-        (Path(__file__).parent / 'assets' / 'pothole-1.jpg', 'Pothole'),
-        (Path(__file__).parent / 'assets' / 'water_leakage.jpg', 'Water Leakage'),
+        (Path(__file__).parent.parent / 'assets' / 'garbage.jpg', 'Garbage'),
+        (Path(__file__).parent.parent / 'assets' / 'pothole-1.jpg', 'Pothole'),
+        (Path(__file__).parent.parent / 'assets' / 'water_leakage.jpg', 'Water Leakage'),
     ]
 
     for image_path, category in images_category:
@@ -24,11 +24,11 @@ def test_image_classification():
 def test_images_classification():
     categories = ['Garbage', 'Pothole', 'Water Leakage']
     images = [
-        (Path(__file__).parent / 'assets' / 'garbage.jpg', 'image/jpeg'),
-        (Path(__file__).parent / 'assets' / 'pothole-1.jpg', 'image/jpeg'),
-        (Path(__file__).parent / 'assets' / 'pothole-2.jpg', 'image/jpeg'),
-        (Path(__file__).parent / 'assets' / 'pothole-3.jpg', 'image/jpeg'),
-        (Path(__file__).parent / 'assets' / 'pothole-4.jpg', 'image/jpeg'),
+        (Path(__file__).parent.parent / 'assets' / 'garbage.jpg', 'image/jpeg'),
+        (Path(__file__).parent.parent / 'assets' / 'pothole-1.jpg', 'image/jpeg'),
+        (Path(__file__).parent.parent / 'assets' / 'pothole-2.jpg', 'image/jpeg'),
+        (Path(__file__).parent.parent / 'assets' / 'pothole-3.jpg', 'image/jpeg'),
+        (Path(__file__).parent.parent / 'assets' / 'pothole-4.jpg', 'image/jpeg'),
     ]
 
     images_with_data = []
