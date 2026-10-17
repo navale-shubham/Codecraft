@@ -1,14 +1,15 @@
+from pathlib import Path
 from io import BytesIO
 
 from app.core import classify_image, classify_images
 
 
 def test_image_classification():
-    categories = ['garbage', 'pothole', 'water leakage']
+    categories = ['Garbage', 'Pothole', 'Water Leakage']
     images_category = [
-        ('backend/tests/assets/garbage.jpg', 'garbage'),
-        ('backend/tests/assets/pothole-1.jpg', 'pothole'),
-        ('backend/tests/assets/water_leakage.jpg', 'water leakage'),
+        (Path(__file__).parent / 'assets' / 'garbage.jpg', 'Garbage'),
+        (Path(__file__).parent / 'assets' / 'pothole-1.jpg', 'Pothole'),
+        (Path(__file__).parent / 'assets' / 'water_leakage.jpg', 'Water Leakage'),
     ]
 
     for image_path, category in images_category:
@@ -21,13 +22,13 @@ def test_image_classification():
 
 
 def test_images_classification():
-    categories = ['garbage', 'pothole', 'water leakage']
+    categories = ['Garbage', 'Pothole', 'Water Leakage']
     images = [
-        ('backend/tests/assets/garbage.jpg', 'image/jpeg'),
-        ('backend/tests/assets/pothole-1.jpg', 'image/jpeg'),
-        ('backend/tests/assets/pothole-2.jpg', 'image/jpeg'),
-        ('backend/tests/assets/pothole-3.jpg', 'image/jpeg'),
-        ('backend/tests/assets/pothole-4.jpg', 'image/jpeg'),
+        (Path(__file__).parent / 'assets' / 'garbage.jpg', 'image/jpeg'),
+        (Path(__file__).parent / 'assets' / 'pothole-1.jpg', 'image/jpeg'),
+        (Path(__file__).parent / 'assets' / 'pothole-2.jpg', 'image/jpeg'),
+        (Path(__file__).parent / 'assets' / 'pothole-3.jpg', 'image/jpeg'),
+        (Path(__file__).parent / 'assets' / 'pothole-4.jpg', 'image/jpeg'),
     ]
 
     images_with_data = []
@@ -38,4 +39,4 @@ def test_images_classification():
 
     result = classify_images(images_with_data, categories)
 
-    assert result == 'pothole'
+    assert result == 'Pothole'

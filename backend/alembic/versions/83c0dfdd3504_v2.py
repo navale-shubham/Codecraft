@@ -25,12 +25,50 @@ def upgrade() -> None:
 
     op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
 
-    op.create_unique_constraint('uq_issue_categories_name', 'issue_categories', ['name'])
-    op.add_column('issue_media', sa.Column('type', sa.Enum('QUERY', 'RESOLUTION', name='mediatype'), nullable=False))
+    op.create_unique_constraint(
+        "uq_issue_categories_name",
+        "issue_categories",
+        ["name"],
+    )
+
+    media_type = sa.Enum(
+        "QUERY",
+        "RESOLUTION",
+        name="mediatype",
+    )
+    media_type.create(op.get_bind(), checkfirst=True)
+
+    op.add_column(
+        "issue_media",
+        sa.Column("type", media_type, nullable=True),
+    )
+
+    # Assign a value to existing rows before enforcing NOT NULL.
+    op.execute(
+        "UPDATE issue_media SET type = 'QUERY' WHERE type IS NULL"
+    )
+
+    op.alter_column(
+        "issue_media",
+        "type",
+        existing_type=media_type,
+        nullable=False,
+    )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
-    op.drop_column('issue_media', 'type')
-    op.drop_constraint('uq_issue_categories_name', 'issue_categories', type_='unique')
+
+    op.drop_column("issue_media", "type")
+
+    sa.Enum(
+        "QUERY",
+        "RESOLUTION",
+        name="mediatype",
+    ).drop(op.get_bind(), checkfirst=True)
+
+    op.drop_constraint(
+        "uq_issue_categories_name",
+        "issue_categories",
+        type_="unique",
+    )

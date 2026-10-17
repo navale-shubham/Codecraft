@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 import uuid
-import json
-from io import BytesIO
+from pathlib import Path
 
 
 class URL:
@@ -107,7 +106,7 @@ class Issue:
         files = []
         
         for file_name in file_names:
-            with open(f'backend/tests/assets/{file_name}', 'rb') as file:
+            with open(Path(__file__).parent / 'assets' / file_name, 'rb') as file:
                 file_data = file.read()
                 files.append(('files', (file_name, file_data, 'image/jpeg')))
 
@@ -122,7 +121,7 @@ class Issue:
         files = []
 
         for file_name in file_names:
-            with open(f'backend/tests/assets/{file_name}', 'rb') as file:
+            with open(Path(__file__).parent / 'assets' / file_name, 'rb') as file:
                 file_data = file.read()
                 files.append(('files', (file_name, file_data, 'image/jpeg')))
 
